@@ -52,3 +52,13 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Project settings, user-specific files & history
+# (Visual Studio, VS Code, Rider, etc.)
+.vs/
+*.suo
+*.user
+.vscode/
+.idea/
+.history/
+Cuzdan.Api/appsettings.json
