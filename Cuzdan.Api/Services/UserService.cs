@@ -4,6 +4,8 @@ using Cuzdan.Api.Schemas;
 using Cuzdan.Api.Data;
 using Azure;
 using Cuzdan.Api.Interfaces;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Cuzdan.Api.Exceptions;
 
 namespace Cuzdan.Api.Services;
 
@@ -17,7 +19,7 @@ public class UserService(CuzdanContext context) : IUserService
 
         if (user == null)
         {
-            throw new Exception("User not found.");
+            throw new NotFoundException("User not found.");
         }
 
         return new UserProfileDto

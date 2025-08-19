@@ -26,7 +26,6 @@ public class CuzdanContext(DbContextOptions<CuzdanContext> options) : DbContext(
             .Property(w => w.Balance)
             .HasColumnType("decimal(18, 2)");
 
-        // Transaction.Amount sütununun tipini ayarla
         modelBuilder.Entity<Transaction>()
             .Property(t => t.Amount)
             .HasColumnType("decimal(18, 2)");

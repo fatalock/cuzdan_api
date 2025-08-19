@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Cuzdan.Api.Data;
 using System.Security.Cryptography;
 using Cuzdan.Api.Interfaces;
+using Cuzdan.Api.Exceptions;
 
 
 namespace Cuzdan.Api.Services;
@@ -19,11 +20,11 @@ public class AuthService(CuzdanContext context, IConfiguration configuration) : 
     private readonly CuzdanContext _context = context;
     private readonly IConfiguration _configuration = configuration;
 
-    public async Task<ApiResponse> RegisterUserAsync(RegisterUserDto registerDto)
+    public async Task RegisterAsync(RegisterUserDto registerDto)
     {
         if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
         {
-            return new ApiResponse { IsSuccessful = false, ErrorMessage = "Email already exist" };
+            throw new ConflictException("Email already exist");
         }
 
         string passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
@@ -39,22 +40,19 @@ public class AuthService(CuzdanContext context, IConfiguration configuration) : 
 
         _context.Users.Add(newUser);
         await _context.SaveChangesAsync();
-
-        return new ApiResponse { IsSuccessful = true, SuccessMessage = "User Created", ErrorMessage = "Register succesful" }; ;
     }
-    public async Task<ApiResponse<AuthResult>> LoginUserAsync(LoginUserDto loginDto)
+    public async Task<ApiResponse<AuthResult>> LoginAsync(LoginUserDto loginDto)
     {
 
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
         {
-            return new ApiResponse<AuthResult> { IsSuccessful = false, ErrorMessage = "Invalid email or password." };
+            throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
         var accessToken = GenerateAccessToken(user);
 
-        // 2. Create the long-lived Refresh Token
         var refreshToken = GenerateRefreshToken(user.Id);
 
         _context.RefreshTokens.Add(refreshToken);
@@ -69,18 +67,21 @@ public class AuthService(CuzdanContext context, IConfiguration configuration) : 
 
         if (storedToken == null)
         {
-            return new ApiResponse<string> { IsSuccessful = false, ErrorMessage = "Invalid refresh token." };
+            throw new InvalidTokenException("Invalid refresh token.");
         }
         if (storedToken.ExpiresAt < DateTime.UtcNow)
         {
-            return new ApiResponse<string> { IsSuccessful = false, ErrorMessage = "Refresh token Expired." };
+            throw new TokenExpiredException("Refresh token Expired.");
         }
         if (storedToken.IsRevoked)
         {
-            return new ApiResponse<string> { IsSuccessful = false, ErrorMessage = "Refresh token revoked" };
+            throw new RevokedTokenException("Refresh token revoked");
         }
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == storedToken.UserId);
-        if (user == null) return new ApiResponse<string> { IsSuccessful = false, ErrorMessage = "User not exist." };
+        if (user == null)
+        {
+            throw new NotFoundException("User not exist.");
+        }    
         var accessToken = GenerateAccessToken(user);
         return new ApiResponse<string> { IsSuccessful = true, SuccessMessage = "New access token granted", Data = accessToken};
     }
@@ -101,7 +102,7 @@ public class AuthService(CuzdanContext context, IConfiguration configuration) : 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.Now.AddMinutes(1), // Token 1 gün geçerli olsun
+            Expires = DateTime.Now.AddMinutes(60),
             SigningCredentials = creds,
             Issuer = _configuration.GetSection("Jwt:Issuer").Value,
             Audience = _configuration.GetSection("Jwt:Audience").Value
@@ -112,7 +113,7 @@ public class AuthService(CuzdanContext context, IConfiguration configuration) : 
 
         return tokenHandler.WriteToken(token);
     }
-        private RefreshToken GenerateRefreshToken(Guid userId)
+        private static RefreshToken GenerateRefreshToken(Guid userId)
     {
         var randomNumber = new byte[64];
         using var rng = RandomNumberGenerator.Create();

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Cuzdan.Api.Schemas;
 using Cuzdan.Api.Interfaces;
+using Cuzdan.Api.Extensions;
 
 namespace Cuzdan.Api.Controllers;
 
@@ -18,43 +19,16 @@ public class UserController(IUserService userService) : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {
-        try
+        Guid userId = User.GetUserId();
+
+        var result = await _userService.GetProfileAsync(userId);
+
+        return Ok(new ApiResponse<UserProfileDto>
         {
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userIdString))
-            {
-                return Unauthorized("No id found.");
-            }
-
-            Guid userId = Guid.Parse(userIdString);
-
-            var result = await _userService.GetProfileAsync(userId);
-
-            return Ok(new ApiResponse<UserProfileDto>
-            {
-                IsSuccessful = true,
-                Data = result,
-                SuccessMessage = "Profile fetched successfully."
-            });
-        }
-        catch (Exception ex)
-        {
-            return NotFound(new ApiResponse<UserProfileDto>
-            {
-                IsSuccessful = false,
-                ErrorMessage = ex.Message
-            });
-        }
-
+            IsSuccessful = true,
+            Data = result,
+            SuccessMessage = "Profile fetched successfully."
+        });
     }
-
-
-
-
-
-
-
-
 
 }

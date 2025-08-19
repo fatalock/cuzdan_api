@@ -7,10 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Cuzdan.Api.Interfaces;
+using Cuzdan.Api.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Veritabanı ve Servis Kayıtları ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CuzdanContext>(options =>
     options.UseNpgsql(connectionString));
@@ -22,7 +22,6 @@ builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddControllers();
 
-// --- JWT Authentication Ayarları (EN ÖNEMLİ EKSİK KISIM) ---
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -38,20 +37,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// --- Swagger (OpenAPI) Ayarları ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    // Güvenlik şemasını OpenAPI 3.0 standardına uygun olarak tanımla
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Type = SecuritySchemeType.Http, // Tip: Http
-        Scheme = "bearer", // Şema: bearer
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT",
         Description = "Lütfen JWT token'ınızı bu alana girin."
     });
 
-    // Güvenlik gereksinimini tanımla
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -60,28 +56,24 @@ builder.Services.AddSwaggerGen(options =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer" // Yukarıda tanımlanan şemanın adı
+                    Id = "Bearer"
                 }
             },
             new List<string>()
         }
     });
 });
-
-// --- Uygulamayı İnşa Et ---
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 var app = builder.Build();
-
-// --- HTTP Request Pipeline Ayarları ---
 if (app.Environment.IsDevelopment())
 {
-    // Doğru Swagger kullanımı bu şekildedir.
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseExceptionHandler(); 
 app.UseHttpsRedirection();
 
-// Önce kimliğini doğrula, sonra yetkilerini kontrol et. Sıralama önemli!
 app.UseAuthentication();
 app.UseAuthorization();
 

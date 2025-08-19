@@ -4,7 +4,7 @@ namespace Cuzdan.Api.Interfaces;
 
 public interface ITransactionService
 {
-    Task<ApiResponse> TransferTransactionAsync(TransactionDto TransactionDto, Guid UserId);
+    Task<ApiResponse> TransferTransactionAsync(TransactionDto transactionDto, Guid UserId);
 
 
 }

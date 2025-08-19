@@ -10,6 +10,5 @@ public class TransactionDto
     public Guid ToId { get; set; }
 
     [Required]
-    [Range(1,1000000, ErrorMessage = "Amount should be greater than 0.")]
     public decimal Amount { get; set; }
 }

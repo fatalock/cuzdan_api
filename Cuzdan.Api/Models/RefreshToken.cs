@@ -7,14 +7,14 @@ public class RefreshToken
     public Guid UserId { get; set; }
     public User? User { get; set; }
 
-    public string Token { get; set; } = null!; // Refresh token string (JWT veya random string)
+    public string Token { get; set; } = null!;
 
-    public DateTime ExpiresAt { get; set; }   // Bitiş zamanı
+    public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? RevokedAt { get; set; } // İptal edilme zamanı, null ise aktif
+    public DateTime? RevokedAt { get; set; }
 
-    public string? ReplacedByToken { get; set; } // Rotation ile yenilenen token
+    public string? ReplacedByToken { get; set; }
 
-    public bool IsActive = true;
-    public bool IsRevoked = false;
+    public bool IsActive { get; set; } = true;
+    public bool IsRevoked { get; set; }
 }

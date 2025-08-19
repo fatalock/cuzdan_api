@@ -4,6 +4,7 @@ using Cuzdan.Api.Schemas;
 using Cuzdan.Api.Data;
 using Azure;
 using Cuzdan.Api.Interfaces;
+using Cuzdan.Api.Exceptions;
 
 
 namespace Cuzdan.Api.Services;
@@ -13,7 +14,7 @@ public class TransactionService(CuzdanContext context) : ITransactionService
 {
     private readonly CuzdanContext _context = context;
 
-    public async Task<ApiResponse> TransferTransactionAsync(TransactionDto TransactionDto, Guid UserId)
+    public async Task<ApiResponse> TransferTransactionAsync(TransactionDto transactionDto, Guid UserId)
     {
         await using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -21,32 +22,32 @@ public class TransactionService(CuzdanContext context) : ITransactionService
 
 
             var senderWallet = await _context.Wallets
-                .FirstOrDefaultAsync(w => w.Id == TransactionDto.FromId);
+                .FirstOrDefaultAsync(w => w.Id == transactionDto.FromId);
 
             var receiverWallet = await _context.Wallets
-                .FirstOrDefaultAsync(w => w.Id == TransactionDto.ToId);
+                .FirstOrDefaultAsync(w => w.Id == transactionDto.ToId);
 
-            if (senderWallet == null || receiverWallet == null) throw new Exception("Wallet not found.");
+            if (senderWallet == null || receiverWallet == null) throw new NotFoundException("Wallet not found.");
 
-            if (senderWallet.UserId != UserId) throw new Exception("Not your wallet");
-
-
-            if (senderWallet.Balance < TransactionDto.Amount) throw new Exception("Not enough balance");
+            if (senderWallet.UserId != UserId) throw new ForbiddenAccessException("Not your wallet");
 
 
-            if (TransactionDto.Amount <= 0) throw new Exception("Invalid amount");
+            if (senderWallet.Balance < transactionDto.Amount) throw new InsufficientBalanceException("Not enough balance");
+
+
+            if (transactionDto.Amount <= 0 | transactionDto.Amount > 1000000) throw new ArgumentOutOfRangeException("transactionDto.Amount","Invalid Amount");
 
 
 
 
-            senderWallet.Balance -= TransactionDto.Amount; // Gönderenden düş
-            receiverWallet.Balance += TransactionDto.Amount; // Alıcıya ekle
+            senderWallet.Balance -= transactionDto.Amount;
+            receiverWallet.Balance += transactionDto.Amount;
 
             var newTransaction = new Transaction
             {
-                FromId = TransactionDto.FromId,
-                ToId = TransactionDto.ToId,
-                Amount = TransactionDto.Amount,
+                FromId = transactionDto.FromId,
+                ToId = transactionDto.ToId,
+                Amount = transactionDto.Amount,
             };
             _context.Transactions.Add(newTransaction);
             await _context.SaveChangesAsync();
@@ -62,15 +63,10 @@ public class TransactionService(CuzdanContext context) : ITransactionService
             return response;
 
         }
-        catch (System.Exception ex)
+        catch (Exception)
         {
             await transaction.RollbackAsync();
-            var response = new ApiResponse
-            {
-                IsSuccessful = false,
-                ErrorMessage = ex.Message
-            };
-            return response;
+            throw;
         }
 
     }

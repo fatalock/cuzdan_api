@@ -13,25 +13,20 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
     {
-        var response = await _authService.RegisterUserAsync(registerDto);
 
-        if (!response.IsSuccessful)
+        await _authService.RegisterAsync(registerDto);
+
+        return Ok(new ApiResponse
         {
-            return BadRequest(response.ErrorMessage);
-        }
-
-        return Ok(response.SuccessMessage);
+            IsSuccessful = true,
+            SuccessMessage = "Wallets fetched succesfully"
+        });
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
     {
-        var response = await _authService.LoginUserAsync(loginDto);
-
-        if (!response.IsSuccessful)
-        {
-            return Unauthorized(response.ErrorMessage);
-        }
+        var response = await _authService.LoginAsync(loginDto);
 
         return Ok(response);
     }
@@ -40,11 +35,6 @@ public class AuthController(IAuthService authService) : ControllerBase
     public async Task<IActionResult> Refresh([FromBody] string refreshToken)
     {
         var response = await _authService.RefresAccesshAsync(refreshToken);
-
-        if (!response.IsSuccessful)
-        {
-            return Unauthorized(response.ErrorMessage);
-        }
 
         return Ok(response);
     }
