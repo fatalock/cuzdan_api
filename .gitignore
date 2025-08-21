@@ -61,4 +61,5 @@ nunit-*.xml
 .vscode/
 .idea/
 .history/
-Cuzdan.Api/appsettings.json
+src/Cuzdan.Api/appsettings.json
+test.py
