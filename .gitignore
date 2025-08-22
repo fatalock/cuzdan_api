@@ -63,3 +63,4 @@ nunit-*.xml
 .history/
 src/Cuzdan.Api/appsettings.json
 test.py
+roadmap.md

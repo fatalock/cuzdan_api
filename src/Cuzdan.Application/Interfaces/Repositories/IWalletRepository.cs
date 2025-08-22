@@ -3,11 +3,9 @@ using Cuzdan.Domain.Entities;
 
 namespace Cuzdan.Application.Interfaces;
 
-public interface IWalletRepository
+public interface IWalletRepository : IRepository<Wallet> 
 {
-    Task AddWalletAsync(Wallet wallet);
     Task<List<WalletDto>> GetWalletsAsyc(Guid Id);
-    Task<Wallet?> GetWalletByIdAsyc(Guid Id);
 
 
     Task<bool> DoesWalletBelongToUserAsync(Guid walletId, Guid userId);

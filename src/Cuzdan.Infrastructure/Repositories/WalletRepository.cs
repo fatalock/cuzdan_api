@@ -6,21 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cuzdan.Infrastructure.Repositories;
 
-public class WalletRepository(CuzdanContext context) : IWalletRepository
+public class WalletRepository(CuzdanContext context) : Repository<Wallet>(context), IWalletRepository
 {
-    private readonly CuzdanContext _context = context;
 
-    public async Task<Wallet?> GetWalletByIdAsyc(Guid Id)
-    {
-        return await _context.Wallets.FirstOrDefaultAsync(u => u.Id == Id);
-    }
-    public async Task AddWalletAsync(Wallet wallet)
-    {
-        await _context.Wallets.AddAsync(wallet);
-    }
     public async Task<List<WalletDto>> GetWalletsAsyc(Guid Id)
     {
-        var wallets = await _context.Wallets
+        var wallets = await Context.Wallets
             .Where(w => w.UserId == Id)
             .Select(w => new WalletDto
             {
@@ -35,7 +26,7 @@ public class WalletRepository(CuzdanContext context) : IWalletRepository
 
     public async Task<bool> DoesWalletBelongToUserAsync(Guid walletId, Guid userId)
     {
-        var walletExists = await _context.Wallets
+        var walletExists = await Context.Wallets
             .AnyAsync(w => w.Id == walletId && w.UserId == userId);
         return walletExists;
     }
@@ -47,13 +38,13 @@ public class WalletRepository(CuzdanContext context) : IWalletRepository
         switch (type.ToLowerInvariant())
         {
             case "sent":
-                transactionsQuery = _context.Transactions.Where(t => t.FromId == walletId);
+                transactionsQuery = Context.Transactions.Where(t => t.FromId == walletId);
                 break;
             case "received":
-                transactionsQuery = _context.Transactions.Where(t => t.ToId == walletId);
+                transactionsQuery = Context.Transactions.Where(t => t.ToId == walletId);
                 break;
             default:
-                transactionsQuery = _context.Transactions.Where(t => t.FromId == walletId || t.ToId == walletId);
+                transactionsQuery = Context.Transactions.Where(t => t.FromId == walletId || t.ToId == walletId);
                 break;
         }
 

@@ -2,9 +2,7 @@ using Cuzdan.Domain.Entities;
 
 namespace Cuzdan.Application.Interfaces;
 
-public interface ITransactionRepository
+public interface ITransactionRepository : IRepository<Transaction> 
 {
-
-    Task AddTransactionAsync(Transaction transaction);
 
 }

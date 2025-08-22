@@ -3,13 +3,8 @@ using Cuzdan.Domain.Entities;
 
 namespace Cuzdan.Application.Interfaces;
 
-public interface IRefreshTokenRepository
+public interface IRefreshTokenRepository : IRepository<RefreshToken> 
 {
-
-
-    Task AddRefreshTokenAsync(RefreshToken refreshToken);
-
     Task<RefreshToken?> GetRefreshTokenByTokenAsync(string Token);
-
 
 }

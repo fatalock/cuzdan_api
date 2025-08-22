@@ -4,22 +4,13 @@ using Cuzdan.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cuzdan.Infrastructure.Repositories;
-public class UserRepository(CuzdanContext context) : IUserRepository
+
+public class UserRepository(CuzdanContext context) : Repository<User>(context), IUserRepository
 {
-    private readonly CuzdanContext _context = context;
 
     public async Task<User?> GetUserByEmailAsync(string email)
     {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-    }
-        public async Task<User?> GetUserByIdAsync(Guid Id)
-    {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Id == Id);
+        return await Context.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
 
-
-    public async Task AddUserAsync(User user)
-    {
-        await _context.Users.AddAsync(user);
-    }
 }

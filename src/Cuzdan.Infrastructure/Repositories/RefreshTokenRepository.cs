@@ -4,17 +4,12 @@ using Cuzdan.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cuzdan.Infrastructure.Repositories;
-public class RefreshTokenRepository(CuzdanContext context) : IRefreshTokenRepository
+public class RefreshTokenRepository(CuzdanContext context) : Repository<RefreshToken>(context), IRefreshTokenRepository
 {
-    private readonly CuzdanContext _context = context;
-
 
     public async Task<RefreshToken?> GetRefreshTokenByTokenAsync(string Token)
     {
-        return await _context.RefreshTokens.FirstOrDefaultAsync(u => u.Token == Token);
+        return await Context.RefreshTokens.FirstOrDefaultAsync(u => u.Token == Token);
     }
-    public async Task AddRefreshTokenAsync(RefreshToken refreshToken)
-    {
-        await _context.RefreshTokens.AddAsync(refreshToken);
-    }
+
 }

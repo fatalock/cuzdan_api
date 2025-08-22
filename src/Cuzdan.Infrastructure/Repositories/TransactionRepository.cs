@@ -5,12 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cuzdan.Infrastructure.Repositories;
 
-public class TransactionRepository(CuzdanContext context) : ITransactionRepository
+public class TransactionRepository(CuzdanContext context) : Repository<Transaction>(context), ITransactionRepository
 {
-    private readonly CuzdanContext _context = context;
 
-    public async Task AddTransactionAsync(Transaction transaction)
-    {
-        await _context.Transactions.AddAsync(transaction);
-    }
 }

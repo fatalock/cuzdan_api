@@ -34,7 +34,7 @@ public class AuthService(IUserRepository userRepository, IRefreshTokenRepository
             Role = "User",
         };
 
-        await _userRepository.AddUserAsync(newUser);
+        await _userRepository.AddAsync(newUser);
         await _unitOfWork.SaveChangesAsync();
     }
     public async Task<ApiResponse<AuthResult>> LoginAsync(LoginUserDto loginDto)
@@ -51,7 +51,7 @@ public class AuthService(IUserRepository userRepository, IRefreshTokenRepository
 
         var refreshToken = GenerateRefreshToken(user.Id);
 
-        await _refreshTokenRepository.AddRefreshTokenAsync(refreshToken);
+        await _refreshTokenRepository.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
         return new ApiResponse<AuthResult> { IsSuccessful = true, SuccessMessage = "Login succesful", Data = new AuthResult{ AccessToken = accessToken, RefreshToken = refreshToken.Token } };
@@ -73,7 +73,7 @@ public class AuthService(IUserRepository userRepository, IRefreshTokenRepository
         {
             throw new RevokedTokenException("Refresh token revoked");
         }
-        var user = await _userRepository.GetUserByIdAsync(storedToken.UserId);
+        var user = await _userRepository.GetByIdAsync(storedToken.UserId);
         if (user == null)
         {
             throw new NotFoundException("User not exist.");

@@ -21,7 +21,7 @@ public class WalletService(IWalletRepository walletRepository, IUnitOfWork unitO
             Balance = 0,
         };
 
-        await _walletRepository.AddWalletAsync(newWallet);
+        await _walletRepository.AddAsync(newWallet);
         await _unitOfWork.SaveChangesAsync();
 
         var response = new ApiResponse

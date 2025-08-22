@@ -3,13 +3,8 @@ using Cuzdan.Domain.Entities;
 
 namespace Cuzdan.Application.Interfaces;
 
-public interface IUserRepository
+public interface IUserRepository : IRepository<User> 
 {
     Task<User?> GetUserByEmailAsync(string email);
-
-    Task AddUserAsync(User user);
-
-    Task<User?> GetUserByIdAsync(Guid Id);
-
 
 }

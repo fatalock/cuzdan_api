@@ -10,7 +10,7 @@ public class UserService(IUserRepository userRepository) : IUserService
 
     public async Task<UserProfileDto> GetProfileAsync(Guid Id)
     {
-        var user = await _userRepository.GetUserByIdAsync(Id);
+        var user = await _userRepository.GetByIdAsync(Id);
 
         if (user == null)
         {

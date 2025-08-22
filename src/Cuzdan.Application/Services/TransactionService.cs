@@ -19,9 +19,9 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
         {
 
 
-            var senderWallet = await _walletRepository.GetWalletByIdAsyc(transactionDto.FromId);
+            var senderWallet = await _walletRepository.GetByIdAsync(transactionDto.FromId);
 
-            var receiverWallet = await _walletRepository.GetWalletByIdAsyc(transactionDto.ToId);
+            var receiverWallet = await _walletRepository.GetByIdAsync(transactionDto.ToId);
 
             if (senderWallet == null || receiverWallet == null) throw new NotFoundException("Wallet not found.");
 
@@ -45,7 +45,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
                 ToId = transactionDto.ToId,
                 Amount = transactionDto.Amount,
             };
-            await _transactionRepository.AddTransactionAsync(newTransaction);
+            await _transactionRepository.AddAsync(newTransaction);
             await _unitOfWork.SaveChangesAsync();
 
             await transaction.CommitAsync();
