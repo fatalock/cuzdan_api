@@ -5,9 +5,6 @@ namespace Cuzdan.Application.DTOs;
 
 public class TransactionFilterDto : BaseFilter<Transaction>
 {
-    public Guid? WalletId { get; set; }
-
-
     public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
 

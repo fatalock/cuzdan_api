@@ -22,7 +22,7 @@ public class TransactionsController(ITransactionService TransactionService) : Co
 
         return Ok(response);
     }
-        [HttpGet("{walletId}")]
+    [HttpPost("{walletId}")]
     public async Task<IActionResult> GetTransactionsByWalletAsync(Guid walletId, [FromQuery] TransactionFilterDto filter)
     {
         Guid userId = User.GetUserId();

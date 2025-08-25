@@ -116,8 +116,8 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
             predicate: predicate,
             pageNumber: filter.PageNumber,
             pageSize: filter.PageSize,
-            orderBy: filter.OrderBy,
-            isDescending: filter.IsDescending
+            orderBy: t => t.CreatedAt,
+            isDescending: true
         );
 
 

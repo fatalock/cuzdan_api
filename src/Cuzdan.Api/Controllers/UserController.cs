@@ -30,7 +30,7 @@ public class UserController(IUserService userService) : ControllerBase
         });
     }
 
-    [HttpPut("me")]
+    [HttpPut("update")]
     public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateUserDto updateUserDto)
     {
         Guid userId = User.GetUserId();
