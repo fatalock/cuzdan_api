@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Cuzdan.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class sogan_init2 : Migration
+    public partial class Sogan_3 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

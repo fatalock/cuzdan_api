@@ -36,18 +36,5 @@ public class WalletsController(IWalletService walletService) : ControllerBase
             SuccessMessage = "Wallets fetched succesfully"
         });
     }
-    [HttpGet("{walletId}")]
-    public async Task<IActionResult> GetWalletTransactionsAsync(Guid walletId, [FromQuery] string type = "all", [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
-    {
-        Guid userId = User.GetUserId();
 
-        var result = await _walletService.GetWalletTransactionsAsync(userId, walletId, type, page, pageSize);
-
-        return Ok(new ApiResponse<PagedResult<TransactionDto>>
-        {
-            IsSuccessful = true,
-            Data = result,
-            SuccessMessage = "Transactions fetched succesfully"
-        });
-    }
 }

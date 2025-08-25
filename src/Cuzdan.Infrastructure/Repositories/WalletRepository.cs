@@ -33,7 +33,6 @@ public class WalletRepository(CuzdanContext context) : Repository<Wallet>(contex
     public async Task<PagedResult<TransactionDto>> GetTransactionsByWalletIdAsync(
         Guid walletId, string type, int page, int pageSize)
     {
-        // 3. Ana sorguyu oluşturma (Eski koddaki adım 3)
         IQueryable<Transaction> transactionsQuery;
         switch (type.ToLowerInvariant())
         {
@@ -48,10 +47,8 @@ public class WalletRepository(CuzdanContext context) : Repository<Wallet>(contex
                 break;
         }
 
-        // 4. Toplam kayıt sayısını hesapla
         var totalCount = await transactionsQuery.CountAsync();
 
-        // 5. Sırala, sayfala ve DTO'ya dönüştür
         var transactions = await transactionsQuery
             .OrderByDescending(t => t.CreatedAt)
             .Skip((page - 1) * pageSize)
@@ -65,7 +62,6 @@ public class WalletRepository(CuzdanContext context) : Repository<Wallet>(contex
             })
             .ToListAsync();
 
-        // 6. Sonucu döndür
         return new PagedResult<TransactionDto>
         {
             Page = page,

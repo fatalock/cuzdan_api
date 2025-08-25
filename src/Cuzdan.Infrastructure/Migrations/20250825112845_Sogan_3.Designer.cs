@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Cuzdan.Infrastructure.Migrations
 {
     [DbContext(typeof(CuzdanContext))]
-    [Migration("20250822150551_sogan_init3")]
-    partial class sogan_init3
+    [Migration("20250825112845_Sogan_3")]
+    partial class Sogan_3
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

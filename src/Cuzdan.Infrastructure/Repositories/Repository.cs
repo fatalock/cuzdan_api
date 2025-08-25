@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Cuzdan.Application.DTOs;
 using Cuzdan.Application.Interfaces;
 using Cuzdan.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,15 @@ public class Repository<T> : IRepository<T> where T : class
         _context = context;
         _dbSet = _context.Set<T>();
     }
+    public IQueryable<T> Query()
+    {
+        return _dbSet.AsQueryable();
+    }
 
+    public IQueryable<T> Where(Expression<Func<T, bool>> predicate)
+    {
+        return _dbSet.Where(predicate);
+    }
     public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbSet.FindAsync([id], cancellationToken);
@@ -31,6 +40,37 @@ public class Repository<T> : IRepository<T> where T : class
     public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
         return await _dbSet.Where(predicate).ToListAsync(cancellationToken);
+    }
+    public async Task<PagedResult<T>> FindAsync(
+    Expression<Func<T, bool>>? predicate, 
+    int pageNumber = 1, 
+    int pageSize = 10,
+    Expression<Func<T, object>>? orderBy = null,
+    bool isDescending = true,
+    CancellationToken cancellationToken = default)
+        {
+        IQueryable<T> query = _dbSet;
+
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+        
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        if (orderBy != null)
+        {
+            query = isDescending
+                ? query.OrderByDescending(orderBy)
+                : query.OrderBy(orderBy);
+        }
+
+        var pagedData = await query.Skip((pageNumber - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToListAsync(cancellationToken);
+
+        return new PagedResult<T>(pageNumber, pageSize , totalCount, pagedData);
     }
 
     public async Task AddAsync(T entity, CancellationToken cancellationToken = default)

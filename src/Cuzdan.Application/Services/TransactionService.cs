@@ -2,6 +2,7 @@ using Cuzdan.Application.Exceptions;
 using Cuzdan.Application.Interfaces;
 using Cuzdan.Application.DTOs;
 using Cuzdan.Domain.Entities;
+using Cuzdan.Application.Extensions;
 
 namespace Cuzdan.Application.Services;
 
@@ -66,5 +67,78 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
         }
 
     }
+
+    public async Task<PagedResult<TransactionDto>> GetTransactionsByWalletAsync(
+        Guid userId,
+        Guid walletId,
+        TransactionFilterDto filter)
+    {
+        if (filter.PageNumber < 1) filter.PageNumber = 1;
+        if (filter.PageSize < 1 || filter.PageSize > 100) filter.PageSize = 10;
+
+        var walletBelongsToUser = await _walletRepository.DoesWalletBelongToUserAsync(walletId, userId);
+        
+        if (!walletBelongsToUser)
+        {
+            throw new NotFoundException("Wallet not found or access is denied.");
+        }
+
+        var predicate = PredicateBuilder.True<Transaction>();
+        predicate = (filter.Type?.ToLowerInvariant()) switch
+        {
+            "sent" => predicate.And(t => t.FromId == walletId),
+            "received" => predicate.And(t => t.ToId == walletId),
+            _ => predicate.And(t => t.FromId == walletId || t.ToId == walletId),
+        };
+
+        if (filter.MinAmount.HasValue)
+        {
+            predicate = predicate.And(t => t.Amount >= filter.MinAmount.Value);
+        }
+
+        if (filter.MaxAmount.HasValue)
+        {
+            predicate = predicate.And(t => t.Amount <= filter.MaxAmount.Value);
+        }
+
+        if (filter.StartDate.HasValue)
+        {
+            predicate = predicate.And(t => t.CreatedAt >= filter.StartDate.Value);
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            var endDate = filter.EndDate.Value.Date.AddDays(1).AddTicks(-1);
+            predicate = predicate.And(t => t.CreatedAt <= endDate);
+        }
+        
+        var pagedTransactions = await _transactionRepository.FindAsync(
+            predicate: predicate,
+            pageNumber: filter.PageNumber,
+            pageSize: filter.PageSize,
+            orderBy: filter.OrderBy,
+            isDescending: filter.IsDescending
+        );
+
+
+
+        var transactionDtos = (pagedTransactions.Items ?? Enumerable.Empty<Transaction>()).Select(t => new TransactionDto
+        {
+            Amount = t.Amount,
+            CreatedAt = t.CreatedAt,
+            FromId = t.FromId,
+            ToId = t.ToId,
+        }).ToList();
+
+        return new PagedResult<TransactionDto>
+        {
+            Page = pagedTransactions.Page,
+            PageSize = pagedTransactions.PageSize,
+            TotalCount = pagedTransactions.TotalCount,
+            Items = transactionDtos
+        };
+
+    }
+
 
 }

@@ -5,7 +5,7 @@ namespace Cuzdan.Application.Interfaces;
 
 public interface IUserService
 {
-    Task<UserProfileDto> GetProfileAsync(Guid Id);
-
+    Task<UserProfileDto> GetUserProfileAsync(Guid Id);
+    Task UpdateUserProfileAsync(Guid userId, UpdateUserDto updateUserDto);
 
 }

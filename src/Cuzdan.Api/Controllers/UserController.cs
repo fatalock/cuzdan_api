@@ -20,13 +20,27 @@ public class UserController(IUserService userService) : ControllerBase
     {
         Guid userId = User.GetUserId();
 
-        var result = await _userService.GetProfileAsync(userId);
+        var result = await _userService.GetUserProfileAsync(userId);
 
         return Ok(new ApiResponse<UserProfileDto>
         {
             IsSuccessful = true,
             Data = result,
             SuccessMessage = "Profile fetched successfully."
+        });
+    }
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateUserDto updateUserDto)
+    {
+        Guid userId = User.GetUserId();
+
+        await _userService.UpdateUserProfileAsync(userId, updateUserDto);
+
+        return Ok(new ApiResponse
+        {
+            IsSuccessful = true,
+            SuccessMessage = "Profile updated successfully."
         });
     }
 
