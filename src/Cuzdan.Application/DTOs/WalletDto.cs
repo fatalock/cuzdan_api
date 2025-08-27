@@ -12,4 +12,7 @@ public class WalletDto
     [Required]
     public decimal Balance { get; set; }
 
+    [Required]
+    public decimal AvailableBalance { get; set; }
+
 }

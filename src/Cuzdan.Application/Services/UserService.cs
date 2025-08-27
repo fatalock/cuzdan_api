@@ -36,24 +36,20 @@ public class UserService(IUserRepository userRepository, IUnitOfWork unitOfWork)
             throw new NotFoundException("User not found.");
         }
 
-        // 2. Email'in başka bir kullanıcı tarafından kullanılıp kullanılmadığını kontrol et
         var existingUserWithEmail = await _userRepository.GetUserByEmailAsync(updateUserDto.Email);
         if (existingUserWithEmail != null && existingUserWithEmail.Id != userId)
         {
             throw new ConflictException("Email is already in use by another account.");
         }
 
-        // 3. Kullanıcı bilgilerini güncelle
         user.Name = updateUserDto.Name;
         user.Email = updateUserDto.Email;
 
-        // 4. Eğer yeni bir şifre gönderilmişse, hash'leyip güncelle
         if (!string.IsNullOrWhiteSpace(updateUserDto.Password))
         {
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(updateUserDto.Password);
         }
 
-        _userRepository.Update(user);
         await _unitOfWork.SaveChangesAsync(CancellationToken.None);
     }
     

@@ -1,3 +1,5 @@
+using Cuzdan.Domain.Enums;
+
 namespace Cuzdan.Domain.Entities;
 
 public class Transaction
@@ -14,6 +16,10 @@ public class Transaction
     public decimal Amount { get; set; } = 0;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public TransactionStatus Status { get; set; }
+
+    public TransactionType Type { get; set; }
 
 
 }

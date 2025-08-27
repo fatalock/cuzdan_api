@@ -22,8 +22,8 @@ public class TransactionsController(ITransactionService TransactionService) : Co
 
         return Ok(response);
     }
-    [HttpPost("{walletId}")]
-    public async Task<IActionResult> GetTransactionsByWalletAsync(Guid walletId, [FromQuery] TransactionFilterDto filter)
+    [HttpPost("wallet_history/{walletId}")]
+    public async Task<IActionResult> GetTransactionsByWalletAsync(Guid walletId, [FromBody] TransactionFilterDto filter)
     {
         Guid userId = User.GetUserId();
 
@@ -34,6 +34,32 @@ public class TransactionsController(ITransactionService TransactionService) : Co
             IsSuccessful = true,
             Data = result,
             SuccessMessage = "Transactions fetched succesfully"
+        });
+    }
+    [HttpPost("deposit/{walletId}")]
+    public async Task<IActionResult> RequestDepositAsync(Guid walletId, [FromBody] decimal amount)
+    {
+        Guid userId = User.GetUserId();
+
+        await _TransactionService.RequestDepositAsync(userId, walletId, amount);
+
+        return Ok(new ApiResponse
+        {
+            IsSuccessful = true,
+            SuccessMessage = "Deposit requested succesfully"
+        });
+    }
+    [HttpPost("withdrawal/{walletId}")]
+    public async Task<IActionResult> RequestWithdrawalAsync(Guid walletId, [FromBody] decimal amount)
+    {
+        Guid userId = User.GetUserId();
+
+        await _TransactionService.RequestWithdrawalAsync(userId, walletId, amount);
+
+        return Ok(new ApiResponse
+        {
+            IsSuccessful = true,
+            SuccessMessage = "Withdrawal requested succesfully"
         });
     }
 }

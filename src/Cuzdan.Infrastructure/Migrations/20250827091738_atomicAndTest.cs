@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Cuzdan.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Sogan_3 : Migration
+    public partial class atomicAndTest : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -60,6 +60,7 @@ namespace Cuzdan.Infrastructure.Migrations
                     WalletName = table.Column<string>(type: "text", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Balance = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    AvailableBalance = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -81,7 +82,9 @@ namespace Cuzdan.Infrastructure.Migrations
                     FromId = table.Column<Guid>(type: "uuid", nullable: false),
                     ToId = table.Column<Guid>(type: "uuid", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -99,6 +102,16 @@ namespace Cuzdan.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "CreatedAt", "Email", "Name", "PasswordHash", "Role" },
+                values: new object[] { new Guid("00000000-0000-0000-0000-000000000001"), new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "system@cuzdan.local", "System", "", "System" });
+
+            migrationBuilder.InsertData(
+                table: "Wallets",
+                columns: new[] { "Id", "AvailableBalance", "Balance", "CreatedAt", "UserId", "WalletName" },
+                values: new object[] { new Guid("00000000-0000-0000-0000-000000000002"), 0m, 0m, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), new Guid("00000000-0000-0000-0000-000000000001"), "System Wallet" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_UserId",

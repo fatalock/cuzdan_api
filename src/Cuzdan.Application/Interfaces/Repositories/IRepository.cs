@@ -8,6 +8,10 @@ public interface IRepository<T> where T : class
     IQueryable<T> Query();
     IQueryable<T> Where(Expression<Func<T, bool>> predicate);
     Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<T?> GetByIdForWriteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<T?> GetByIdForReadAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
 

@@ -12,5 +12,8 @@ public interface ITransactionService
 
     );
 
+    Task RequestDepositAsync(Guid userId, Guid walletId, decimal amount);
+    Task RequestWithdrawalAsync(Guid userId, Guid walletId, decimal amount);
 
+    Task FinalizePaymentAsync(Guid transactionId, bool isSuccessful);
 }

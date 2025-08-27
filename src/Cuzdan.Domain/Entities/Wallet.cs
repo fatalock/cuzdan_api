@@ -11,6 +11,7 @@ public class Wallet
     public User? User { get; set; }
 
     public decimal Balance { get; set; }
+    public decimal AvailableBalance { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
   

@@ -4,6 +4,7 @@ namespace Cuzdan.Application.DTOs;
 
 public class BaseFilter<T> where T : class
 {
-    public int PageNumber { get; set; } = 1;
-    public int PageSize { get; set; } = 10;
+    public bool? IsDescending { get; set; }
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
 }

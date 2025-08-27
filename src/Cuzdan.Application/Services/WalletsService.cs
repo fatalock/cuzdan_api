@@ -20,6 +20,7 @@ public class WalletService(IWalletRepository walletRepository, IUnitOfWork unitO
             WalletName = createWalletDto.WalletName,
             UserId = Id,
             Balance = 0,
+            AvailableBalance = 0
         };
 
         await _walletRepository.AddAsync(newWallet);

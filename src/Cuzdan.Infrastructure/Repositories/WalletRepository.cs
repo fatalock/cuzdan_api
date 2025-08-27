@@ -17,7 +17,8 @@ public class WalletRepository(CuzdanContext context) : Repository<Wallet>(contex
             {
                 Id = w.Id,
                 WalletName = w.WalletName,
-                Balance = w.Balance
+                Balance = w.Balance,
+                AvailableBalance = w.AvailableBalance
             })
             .ToListAsync();
 
@@ -30,44 +31,5 @@ public class WalletRepository(CuzdanContext context) : Repository<Wallet>(contex
             .AnyAsync(w => w.Id == walletId && w.UserId == userId);
         return walletExists;
     }
-    public async Task<PagedResult<TransactionDto>> GetTransactionsByWalletIdAsync(
-        Guid walletId, string type, int page, int pageSize)
-    {
-        IQueryable<Transaction> transactionsQuery;
-        switch (type.ToLowerInvariant())
-        {
-            case "sent":
-                transactionsQuery = Context.Transactions.Where(t => t.FromId == walletId);
-                break;
-            case "received":
-                transactionsQuery = Context.Transactions.Where(t => t.ToId == walletId);
-                break;
-            default:
-                transactionsQuery = Context.Transactions.Where(t => t.FromId == walletId || t.ToId == walletId);
-                break;
-        }
 
-        var totalCount = await transactionsQuery.CountAsync();
-
-        var transactions = await transactionsQuery
-            .OrderByDescending(t => t.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(t => new TransactionDto
-            {
-                Amount = t.Amount,
-                CreatedAt = t.CreatedAt,
-                FromId = t.FromId,
-                ToId = t.ToId,
-            })
-            .ToListAsync();
-
-        return new PagedResult<TransactionDto>
-        {
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = totalCount,
-            Items = transactions
-        };
-    }
 }

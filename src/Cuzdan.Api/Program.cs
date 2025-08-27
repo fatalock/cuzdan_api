@@ -9,6 +9,7 @@ using Cuzdan.Application.Interfaces;
 using Cuzdan.Application.Services;
 using Cuzdan.Infrastructure.Repositories;
 using Cuzdan.Infrastructure.Authentication;
+using Cuzdan.Infrastructure.Gateways;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,13 +30,14 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
-
+builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>(); 
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -96,3 +98,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

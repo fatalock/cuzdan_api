@@ -75,8 +75,14 @@ namespace Cuzdan.Infrastructure.Migrations
                     b.Property<Guid>("FromId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("ToId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -115,6 +121,17 @@ namespace Cuzdan.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "system@cuzdan.local",
+                            Name = "System",
+                            PasswordHash = "",
+                            Role = "System"
+                        });
                 });
 
             modelBuilder.Entity("Cuzdan.Domain.Entities.Wallet", b =>
@@ -122,6 +139,9 @@ namespace Cuzdan.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<decimal>("AvailableBalance")
+                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal>("Balance")
                         .HasColumnType("decimal(18, 2)");
@@ -141,6 +161,17 @@ namespace Cuzdan.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Wallets");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                            AvailableBalance = 0m,
+                            Balance = 0m,
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            UserId = new Guid("00000000-0000-0000-0000-000000000001"),
+                            WalletName = "System Wallet"
+                        });
                 });
 
             modelBuilder.Entity("Cuzdan.Domain.Entities.RefreshToken", b =>

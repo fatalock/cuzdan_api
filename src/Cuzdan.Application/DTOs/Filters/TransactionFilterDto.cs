@@ -1,10 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using Cuzdan.Domain.Entities;
+using Cuzdan.Domain.Enums;
 
 namespace Cuzdan.Application.DTOs;
 
+
+
 public class TransactionFilterDto : BaseFilter<Transaction>
 {
+    public TransactionSortField? OrderBy { get; set; }
     public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
 
