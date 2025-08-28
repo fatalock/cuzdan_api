@@ -13,7 +13,11 @@ public class Transaction
     public Guid ToId { get; set; }
 
     public Wallet? To { get; set; }
-    public decimal Amount { get; set; } = 0;
+    public decimal OriginalAmount { get; set; } = 0;
+    public CurrencyType OriginalCurrency { get; set; }
+    public decimal ConvertedAmount { get; set; } = 0;
+    public CurrencyType TargetCurrency { get; set; }
+    public decimal ConversionRate { get; set; } = 0;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

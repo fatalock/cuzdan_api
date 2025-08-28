@@ -48,7 +48,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
             {
                 FromId = transactionDto.FromId,
                 ToId = transactionDto.ToId,
-                Amount = transactionDto.Amount,
+                OriginalAmount = transactionDto.Amount,
                 Status = TransactionStatus.Completed,
                 Type = TransactionType.Transfer
             };
@@ -99,12 +99,12 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
 
         if (filter.MinAmount.HasValue)
         {
-            predicate = predicate.And(t => t.Amount >= filter.MinAmount.Value);
+            predicate = predicate.And(t => t.OriginalAmount >= filter.MinAmount.Value);
         }
 
         if (filter.MaxAmount.HasValue)
         {
-            predicate = predicate.And(t => t.Amount <= filter.MaxAmount.Value);
+            predicate = predicate.And(t => t.OriginalAmount <= filter.MaxAmount.Value);
         }
 
         if (filter.StartDate.HasValue)
@@ -120,7 +120,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
 
         Expression<Func<Transaction, object>>? orderByExpr = filter.OrderBy switch
         {
-            TransactionSortField.Amount => t => t.Amount,
+            TransactionSortField.Amount => t => t.OriginalAmount,
             TransactionSortField.CreatedAt => t => t.CreatedAt,
             null => t => t.CreatedAt,
             _ => t => t.CreatedAt,
@@ -139,7 +139,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
         var transactionDtos = (pagedTransactions.Items ?? Enumerable.Empty<Transaction>()).Select(t => new TransactionDto
         {
             Id = t.Id,
-            Amount = t.Amount,
+            Amount = t.OriginalAmount,
             CreatedAt = t.CreatedAt,
             FromId = t.FromId,
             ToId = t.ToId,
@@ -171,7 +171,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
         {
             FromId = SystemConstants.SystemWalletId,
             ToId = walletId,
-            Amount = amount,
+            OriginalAmount = amount,
             Status = TransactionStatus.Pending,
             Type = TransactionType.Deposit
         };
@@ -199,7 +199,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
             {
                 FromId = SystemConstants.SystemWalletId,
                 ToId = walletId,
-                Amount = amount,
+                OriginalAmount = amount,
                 Status = TransactionStatus.Pending,
                 Type = TransactionType.Withdrawal
             };
@@ -220,7 +220,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
         await using var dbTransaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var transaction = await _transactionRepository.GetByIdAsync(transactionId);
+            var transaction = await _transactionRepository.GetByIdForWriteAsync(transactionId);
 
             if (transaction is null) throw new NotFoundException("Transaction not found.");
             if (transaction.Status != TransactionStatus.Pending) throw new InvalidOperationException("Transaction is not in a pending state.");
@@ -239,12 +239,13 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
 
                 if (transaction.Type == TransactionType.Deposit)
                 {
-                    wallet.Balance += transaction.Amount;
+                    wallet.Balance += transaction.OriginalAmount;
+                    wallet.AvailableBalance += transaction.OriginalAmount;
                     transaction.Status = TransactionStatus.Completed;
                 }
                 else if (transaction.Type == TransactionType.Withdrawal)
                 {
-                    wallet.Balance -= transaction.Amount;
+                    wallet.Balance -= transaction.OriginalAmount;
                     transaction.Status = TransactionStatus.Completed;
                 }
                 else
@@ -258,7 +259,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
                 transaction.Status = TransactionStatus.Failed;
                 if (transaction.Type == TransactionType.Withdrawal)
                 {
-                    wallet.AvailableBalance += transaction.Amount;
+                    wallet.AvailableBalance += transaction.OriginalAmount;
                 }
             }
             await _unitOfWork.SaveChangesAsync();

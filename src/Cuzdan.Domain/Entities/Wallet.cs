@@ -1,3 +1,5 @@
+using Cuzdan.Domain.Enums;
+
 namespace Cuzdan.Domain.Entities;
 
 public class Wallet
@@ -12,6 +14,8 @@ public class Wallet
 
     public decimal Balance { get; set; }
     public decimal AvailableBalance { get; set; }
+
+    public CurrencyType Currency { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
   

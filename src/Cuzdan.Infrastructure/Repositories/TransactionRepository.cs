@@ -34,7 +34,7 @@ public class TransactionRepository(CuzdanContext context) : Repository<Transacti
             .Select(t => new TransactionDto
             {
                 Id = t.Id,
-                Amount = t.Amount,
+                Amount = t.OriginalAmount,
                 CreatedAt = t.CreatedAt,
                 FromId = t.FromId,
                 ToId = t.ToId,

@@ -32,7 +32,7 @@ public class CuzdanContext(DbContextOptions<CuzdanContext> options) : DbContext(
             .HasColumnType("decimal(18, 2)");
 
         modelBuilder.Entity<Transaction>()
-            .Property(t => t.Amount)
+            .Property(t => t.OriginalAmount)
             .HasColumnType("decimal(18, 2)");
 
         modelBuilder.Entity<User>().HasData(

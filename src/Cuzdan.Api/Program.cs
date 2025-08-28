@@ -10,6 +10,7 @@ using Cuzdan.Application.Services;
 using Cuzdan.Infrastructure.Repositories;
 using Cuzdan.Infrastructure.Authentication;
 using Cuzdan.Infrastructure.Gateways;
+using RestSharp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,11 +32,12 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>(); 
+builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 
-
+builder.Services.AddMemoryCache(); 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 
