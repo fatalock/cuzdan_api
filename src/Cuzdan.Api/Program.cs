@@ -15,6 +15,7 @@ using Cuzdan.Domain.Enums;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Cuzdan.Application.Validators;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +73,7 @@ builder.Services.AddControllers()
     });
 builder.Services.AddHttpClient();
 builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserDtoValidator).Assembly);
+builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
