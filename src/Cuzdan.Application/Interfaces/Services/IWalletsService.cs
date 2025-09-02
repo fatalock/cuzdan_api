@@ -7,6 +7,6 @@ public interface IWalletService
     Task<ApiResponse> CreateWalletAsync(CreateWalletDto createWalletDto, Guid Id);
     Task<List<WalletDto>> GetWalletsAsyc(Guid Id);
 
-
+    Task<List<UserBalanceByCurrencyResponseDto>> GetTotalBalancePerCurrencyAsync(Guid Id);
 
 }

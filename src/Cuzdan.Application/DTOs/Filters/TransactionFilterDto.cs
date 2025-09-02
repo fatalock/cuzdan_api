@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Cuzdan.Domain.Entities;
 using Cuzdan.Domain.Enums;
 
@@ -15,5 +14,7 @@ public class TransactionFilterDto : BaseFilter<Transaction>
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 
-    public string? Type { get; set; }
+    public TransactionType? Type { get; set; }
+
+    public TransactionStatus? Status { get; set; }
 }

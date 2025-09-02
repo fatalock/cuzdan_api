@@ -1,24 +1,19 @@
+using System.Net.Http.Json;
 using Cuzdan.Application.Interfaces;
 using Cuzdan.Domain.Enums;
 using Microsoft.Extensions.Caching.Memory;
-using RestSharp;
-using System;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+
 
 
 namespace Cuzdan.Infrastructure.Gateways;
 
-public class CurrencyConversionService(IMemoryCache memoryCache, RestClient client) : ICurrencyConversionService
+public class CurrencyConversionService(IMemoryCache memoryCache, HttpClient httpClient, IConfiguration configuration) : ICurrencyConversionService
 {
-    private readonly IMemoryCache _memoryCache = memoryCache;
-    private readonly string _appId = "ed98b5e6f5284516850d2c9969c4d94a";
-    private readonly RestClient _client = client;
+    private readonly string _appId = configuration["ExternalApis:OpenExchangeRates:AppId"];
     private readonly string[] _supportedCurrencies = Enum.GetNames<CurrencyType>();
     private const string BaseCurrency = "USD";
-    public CurrencyConversionService() : this(null!, null!)
-    {
-        Console.WriteLine("!!! UYARI: Parametresiz constructor çağrıldı, bu DI hatasına işaret edebilir !!!");
-    }
+
     public async Task<decimal> GetConversionRateAsync(CurrencyType fromCurrency, CurrencyType toCurrency)
     {
         if (fromCurrency == toCurrency)
@@ -27,14 +22,14 @@ public class CurrencyConversionService(IMemoryCache memoryCache, RestClient clie
         }
         var cacheKey = $"Rate_{fromCurrency}_{toCurrency}";
 
-        if (_memoryCache.TryGetValue(cacheKey, out decimal rate))
+        if (memoryCache.TryGetValue(cacheKey, out decimal rate))
         {
             return rate;
         }
 
         await SendApiCallAndPopulateAsync();
 
-        if (_memoryCache.TryGetValue(cacheKey, out decimal finalRate))
+        if (memoryCache.TryGetValue(cacheKey, out decimal finalRate))
         {
             return finalRate;
         }
@@ -47,12 +42,9 @@ public class CurrencyConversionService(IMemoryCache memoryCache, RestClient clie
         // API'den sadece desteklediğimiz kurları, USD bazlı olarak istiyoruz.
         var symbols = string.Join(",", _supportedCurrencies.Where(c => c != BaseCurrency));
 
-        var request = new RestRequest("api/latest.json");
-        request.AddParameter("app_id", _appId);
-        request.AddParameter("base", BaseCurrency);
-        request.AddParameter("symbols", symbols);
+        var requestUrl = $"api/latest.json?app_id={_appId}&base={BaseCurrency}&symbols={symbols}";
 
-        var response = await _client.GetAsync<ExchangeRateResponse>(request);
+        var response = await httpClient.GetFromJsonAsync<ExchangeRateResponse>(requestUrl);
 
         
         if (response == null || response.Rates == null)
@@ -73,7 +65,7 @@ public class CurrencyConversionService(IMemoryCache memoryCache, RestClient clie
                 var usdToToRate = response.Rates[toCurr];
                 var conversionRate = usdToToRate / usdToFromRate;
 
-                _memoryCache.Set(rateKey, conversionRate, cacheOptions);
+                memoryCache.Set(rateKey, conversionRate, cacheOptions);
             }
         }
     }

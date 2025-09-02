@@ -1,30 +1,27 @@
-using Cuzdan.Application.Exceptions;
 using Cuzdan.Application.Interfaces;
 using Cuzdan.Application.DTOs;
 using Cuzdan.Domain.Entities;
-using Cuzdan.Application.Extensions;
 
 namespace Cuzdan.Application.Services;
 
 
-public class WalletService(IWalletRepository walletRepository, IUnitOfWork unitOfWork) : IWalletService
+public class WalletService(IUnitOfWork unitOfWork) : IWalletService
 {
-    private readonly IWalletRepository _walletRepository = walletRepository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+
 
     public async Task<ApiResponse> CreateWalletAsync(CreateWalletDto createWalletDto, Guid Id)
     {
+
 
         var newWallet = new Wallet
         {
             WalletName = createWalletDto.WalletName,
             UserId = Id,
-            Balance = 0,
-            AvailableBalance = 0
+            Currency = createWalletDto.Currency
         };
 
-        await _walletRepository.AddAsync(newWallet);
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.Wallets.AddAsync(newWallet);
+        await unitOfWork.SaveChangesAsync();
 
         var response = new ApiResponse
         {
@@ -37,10 +34,31 @@ public class WalletService(IWalletRepository walletRepository, IUnitOfWork unitO
 
     public async Task<List<WalletDto>> GetWalletsAsyc(Guid Id)
     {
-        var wallets = await _walletRepository.GetWalletsAsyc(Id);
-        return wallets;
+        var wallets = await unitOfWork.Wallets.GetWalletsAsyc(Id);
+        var walletDtos = wallets.Select(wallet => new WalletDto
+        {
+            Id = wallet.Id,
+            WalletName = wallet.WalletName,
+            Balance = wallet.Balance,
+            AvailableBalance = wallet.AvailableBalance,
+            Currency = wallet.Currency,
+
+        }).ToList();
+
+        return walletDtos;
     }
 
+    public async Task<List<UserBalanceByCurrencyResponseDto>> GetTotalBalancePerCurrencyAsync(Guid Id)
+    {
+        var balancesFromRepo = await unitOfWork.Wallets.GetTotalBalancePerCurrencyAsync(Id);
+        
+        var response = balancesFromRepo.Select(b => new UserBalanceByCurrencyResponseDto
+        {
+            Currency = b.CurrencyType.ToString(),
+            TotalBalance = b.TotalBalance
+        }).ToList();
 
+        return response;
+    }
 
 }

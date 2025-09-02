@@ -1,12 +1,11 @@
-using System.ComponentModel.DataAnnotations;
+using Cuzdan.Domain.Enums;
 
 namespace Cuzdan.Application.DTOs;
 
 public class CreateWalletDto
 {
-    [Required]
     public required string WalletName { get; set; }
 
-
+    public required CurrencyType Currency { get; set; }
 
 }

@@ -4,7 +4,7 @@ namespace Cuzdan.Application.Interfaces;
 
 public interface ITransactionService
 {
-    Task<ApiResponse> TransferTransactionAsync(TransactionDto transactionDto, Guid UserId);
+    Task<ApiResponse> TransferTransactionAsync(CreateTransactionDto transactionDto, Guid UserId);
     Task<PagedResult<TransactionDto>> GetTransactionsByWalletAsync(
         Guid userId,
         Guid walletId,
@@ -12,8 +12,8 @@ public interface ITransactionService
 
     );
 
-    Task RequestDepositAsync(Guid userId, Guid walletId, decimal amount);
-    Task RequestWithdrawalAsync(Guid userId, Guid walletId, decimal amount);
+    Task RequestDepositAsync(Guid userId, Guid walletId, DepositWithdrawalRequestDto depositRequestDto);
+    Task RequestWithdrawalAsync(Guid userId, Guid walletId, DepositWithdrawalRequestDto withdrawalRequestDto);
 
     Task FinalizePaymentAsync(Guid transactionId, bool isSuccessful);
 }

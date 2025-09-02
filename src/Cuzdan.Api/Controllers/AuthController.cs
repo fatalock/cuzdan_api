@@ -8,13 +8,12 @@ namespace Cuzdan.Api.Controllers;
 [ApiController]
 public class AuthController(IAuthService authService) : ControllerBase
 {
-    private readonly IAuthService _authService = authService;
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
     {
 
-        await _authService.RegisterAsync(registerDto);
+        await authService.RegisterAsync(registerDto);
 
         return Ok(new ApiResponse
         {
@@ -26,7 +25,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
     {
-        var response = await _authService.LoginAsync(loginDto);
+        var response = await authService.LoginAsync(loginDto);
 
         return Ok(response);
     }
@@ -34,7 +33,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] string refreshToken)
     {
-        var response = await _authService.RefresAccesshAsync(refreshToken);
+        var response = await authService.RefresAccesshAsync(refreshToken);
 
         return Ok(response);
     }

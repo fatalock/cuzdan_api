@@ -1,27 +1,19 @@
-using System.Security.Claims;
-using System.Text;
 using System.Security.Cryptography;
 using Cuzdan.Application.DTOs;
 using Cuzdan.Application.Exceptions;
 using Cuzdan.Application.Interfaces;
 using Cuzdan.Domain.Entities;
+using Cuzdan.Domain.Enums;
 
 namespace Cuzdan.Application.Services;
 
 
-public class AuthService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository, IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitOfWork) : IAuthService
+public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitOfWork) : IAuthService
 {
-    private readonly IUserRepository _userRepository = userRepository;
-    private readonly IRefreshTokenRepository _refreshTokenRepository = refreshTokenRepository;
-    private readonly IJwtTokenGenerator _jwtTokenGenerator = jwtTokenGenerator;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
-
+    
     public async Task RegisterAsync(RegisterUserDto registerDto)
     {
-        if (await _userRepository.GetUserByEmailAsync(registerDto.Email) != null)
-        {
-            throw new ConflictException("Email already exist");
-        }
+        if (await unitOfWork.Users.GetUserByEmailAsync(registerDto.Email) != null) throw new ConflictException("Email already exist");
 
         string passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
@@ -31,54 +23,45 @@ public class AuthService(IUserRepository userRepository, IRefreshTokenRepository
             Email = registerDto.Email,
             PasswordHash = passwordHash,
             CreatedAt = DateTime.UtcNow,
-            Role = "User",
+            Role = UserRole.User,
         };
 
-        await _userRepository.AddAsync(newUser);
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.Users.AddAsync(newUser);
+        await unitOfWork.SaveChangesAsync();
     }
     public async Task<ApiResponse<AuthResult>> LoginAsync(LoginUserDto loginDto)
     {
 
-        var user = await _userRepository.GetUserByEmailAsync(loginDto.Email);
+        var user = await unitOfWork.Users.GetUserByEmailAsync(loginDto.Email);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
-        {
-            throw new UnauthorizedAccessException("Invalid email or password.");
-        }
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash)) throw new UnauthorizedAccessException("Invalid email or password.");
 
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
+
+        var accessToken = jwtTokenGenerator.GenerateAccessToken(user);
 
         var refreshToken = GenerateRefreshToken(user.Id);
 
-        await _refreshTokenRepository.AddAsync(refreshToken);
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.RefreshTokens.AddAsync(refreshToken);
+        await unitOfWork.SaveChangesAsync();
 
         return new ApiResponse<AuthResult> { IsSuccessful = true, SuccessMessage = "Login succesful", Data = new AuthResult{ AccessToken = accessToken, RefreshToken = refreshToken.Token } };
     }
 
     public async Task<ApiResponse<string>> RefresAccesshAsync(string refreshToken)
     {
-        var storedToken = await _refreshTokenRepository.GetRefreshTokenByTokenAsync(refreshToken);
+        var storedToken = await unitOfWork.RefreshTokens.GetRefreshTokenByTokenAsync(refreshToken);
 
-        if (storedToken == null)
-        {
-            throw new InvalidTokenException("Invalid refresh token.");
-        }
-        if (storedToken.ExpiresAt < DateTime.UtcNow)
-        {
-            throw new TokenExpiredException("Refresh token Expired.");
-        }
-        if (storedToken.IsRevoked)
-        {
-            throw new RevokedTokenException("Refresh token revoked");
-        }
-        var user = await _userRepository.GetByIdAsync(storedToken.UserId);
-        if (user == null)
-        {
-            throw new NotFoundException("User not exist.");
-        }    
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
+        if (storedToken == null) throw new InvalidTokenException("Invalid refresh token.");
+
+        if (storedToken.ExpiresAt < DateTime.UtcNow) throw new TokenExpiredException("Refresh token Expired.");
+
+        if (storedToken.IsRevoked) throw new RevokedTokenException("Refresh token revoked");
+
+        var user = await unitOfWork.Users.GetByIdAsync(storedToken.UserId);
+
+        if (user == null) throw new NotFoundException("User not exist.");
+  
+        var accessToken = jwtTokenGenerator.GenerateAccessToken(user);
         return new ApiResponse<string> { IsSuccessful = true, SuccessMessage = "New access token granted", Data = accessToken};
     }
     

@@ -10,13 +10,36 @@ using Cuzdan.Application.Services;
 using Cuzdan.Infrastructure.Repositories;
 using Cuzdan.Infrastructure.Authentication;
 using Cuzdan.Infrastructure.Gateways;
-using RestSharp;
+using Npgsql;
+using Cuzdan.Domain.Enums;
+using System.Text.Json.Serialization;
+using FluentValidation;
+using Cuzdan.Application.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+
+dataSourceBuilder.MapEnum<UserRole>("user_role");
+dataSourceBuilder.MapEnum<CurrencyType>("currency_type");
+dataSourceBuilder.MapEnum<TransactionStatus>("transaction_status");
+dataSourceBuilder.MapEnum<TransactionType>("transaction_type");
+
+var dataSource = dataSourceBuilder.Build();
+
 builder.Services.AddDbContext<CuzdanContext>(options =>
-    options.UseNpgsql(connectionString));
+        options.UseNpgsql(
+        dataSource,
+        o =>
+        {
+            o.MapEnum<CurrencyType>("currency_type");
+            o.MapEnum<TransactionStatus>("transaction_status");
+            o.MapEnum<TransactionType>("transaction_type");
+            o.MapEnum<UserRole>("user_role");
+        }
+    )
+);
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -24,6 +47,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
@@ -32,14 +56,22 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>(); 
-builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
+builder.Services.AddHttpClient<ICurrencyConversionService, CurrencyConversionService>(client =>
+{
+    client.BaseAddress = new Uri("https://openexchangerates.org");
+});
 
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 
 builder.Services.AddMemoryCache(); 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddHttpClient();
+builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserDtoValidator).Assembly);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

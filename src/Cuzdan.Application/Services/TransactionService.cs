@@ -10,68 +10,36 @@ using Cuzdan.Domain.Constants;
 namespace Cuzdan.Application.Services;
 
 
-public class TransactionService(ITransactionRepository transactionRepository, IWalletRepository walletRepository, IPaymentGatewayService paymentGatewayService, IUnitOfWork unitOfWork) : ITransactionService
+public class TransactionService(
+    IPaymentGatewayService paymentGatewayService,
+    IUnitOfWork unitOfWork, 
+    ICurrencyConversionService currencyConversionService) : ITransactionService
 {
-    private readonly ITransactionRepository _transactionRepository = transactionRepository;
-    private readonly IWalletRepository _walletRepository = walletRepository;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    private readonly IPaymentGatewayService _paymentGatewayService = paymentGatewayService;
 
-    public async Task<ApiResponse> TransferTransactionAsync(TransactionDto transactionDto, Guid UserId)
+    public async Task<ApiResponse> TransferTransactionAsync(CreateTransactionDto transactionDto, Guid UserId)
     {
-        await using var transaction = await _unitOfWork.BeginTransactionAsync();
-        try
+
+        var senderWallet = await unitOfWork.Wallets.GetByIdAsync(transactionDto.FromId);
+
+        var receiverWallet = await unitOfWork.Wallets.GetByIdAsync(transactionDto.ToId);
+
+        if (senderWallet == null || receiverWallet == null) throw new NotFoundException("Wallet not found.");
+
+        if (senderWallet.UserId != UserId) throw new ForbiddenAccessException("Not your wallet");
+
+        if (senderWallet.AvailableBalance < transactionDto.Amount) throw new InsufficientBalanceException("Not enough balance");
+
+        var conversionRate = await currencyConversionService.GetConversionRateAsync(senderWallet.Currency, receiverWallet.Currency);
+
+        await unitOfWork.Transactions.TransferTransactionAsync(transactionDto.FromId, transactionDto.ToId, transactionDto.Amount, conversionRate);
+
+        var response = new ApiResponse
         {
-            var senderWallet = await _walletRepository.GetByIdForWriteAsync(transactionDto.FromId);
+            IsSuccessful = true,
+            SuccessMessage = "Transaction done",
+        };
 
-            var receiverWallet = await _walletRepository.GetByIdForWriteAsync(transactionDto.ToId);
-
-            if (senderWallet == null || receiverWallet == null) throw new NotFoundException("Wallet not found.");
-
-            if (senderWallet.UserId != UserId) throw new ForbiddenAccessException("Not your wallet");
-
-
-            if (senderWallet.AvailableBalance < transactionDto.Amount) throw new InsufficientBalanceException("Not enough balance");
-
-
-            if (transactionDto.Amount <= 0 | transactionDto.Amount > 1000000) throw new ArgumentOutOfRangeException("transactionDto.Amount", "Invalid Amount");
-
-
-
-            senderWallet.AvailableBalance -= transactionDto.Amount;
-            senderWallet.Balance -= transactionDto.Amount;
-            
-            receiverWallet.AvailableBalance += transactionDto.Amount;
-            receiverWallet.Balance += transactionDto.Amount;
-
-            var newTransaction = new Transaction
-            {
-                FromId = transactionDto.FromId,
-                ToId = transactionDto.ToId,
-                OriginalAmount = transactionDto.Amount,
-                Status = TransactionStatus.Completed,
-                Type = TransactionType.Transfer
-            };
-            await _transactionRepository.AddAsync(newTransaction);
-            await _unitOfWork.SaveChangesAsync();
-
-            await transaction.CommitAsync();
-
-            var response = new ApiResponse
-            {
-                IsSuccessful = true,
-                SuccessMessage = "Transaction done",
-            };
-
-            return response;
-
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
-
+        return response;
     }
 
     public async Task<PagedResult<TransactionDto>> GetTransactionsByWalletAsync(
@@ -82,20 +50,23 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
         if (filter.PageNumber < 1) filter.PageNumber = 1;
         if (filter.PageSize < 1 || filter.PageSize > 100) filter.PageSize = 10;
 
-        var walletBelongsToUser = await _walletRepository.DoesWalletBelongToUserAsync(walletId, userId);
+        var walletBelongsToUser = await unitOfWork.Wallets.DoesWalletBelongToUserAsync(walletId, userId);
 
-        if (!walletBelongsToUser)
-        {
-            throw new NotFoundException("Wallet not found or access is denied.");
-        }
+        if (!walletBelongsToUser) throw new NotFoundException("Wallet not found or access is denied.");
+
 
         var predicate = PredicateBuilder.True<Transaction>();
-        predicate = (filter.Type?.ToLowerInvariant()) switch
+        predicate = predicate.And(t => t.FromId == walletId || t.ToId == walletId);
+        if (filter.Status.HasValue)
         {
-            "sent" => predicate.And(t => t.FromId == walletId),
-            "received" => predicate.And(t => t.ToId == walletId),
-            _ => predicate.And(t => t.FromId == walletId || t.ToId == walletId),
-        };
+            predicate = predicate.And(t => t.Status == filter.Status.Value);
+        }
+
+        // Type filtresinin doğru hali:
+        if (filter.Type.HasValue)
+        {
+            predicate = predicate.And(t => t.Type == filter.Type.Value);
+        }
 
         if (filter.MinAmount.HasValue)
         {
@@ -126,24 +97,30 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
             _ => t => t.CreatedAt,
         };
 
-        var pagedTransactions = await _transactionRepository.FindAsync(
+        var pagedTransactions = await unitOfWork.Transactions.FindAsync(
             predicate: predicate,
             pageNumber: filter.PageNumber,
             pageSize: filter.PageSize,
             orderBy: orderByExpr,
             isDescending: filter.IsDescending ?? true
         );
-
+        
 
 
         var transactionDtos = (pagedTransactions.Items ?? Enumerable.Empty<Transaction>()).Select(t => new TransactionDto
         {
             Id = t.Id,
-            Amount = t.OriginalAmount,
-            CreatedAt = t.CreatedAt,
             FromId = t.FromId,
             ToId = t.ToId,
-            Status = t.Status
+            Amount = t.OriginalAmount,
+            OriginalCurrency = t.OriginalCurrency.ToString(),
+            ConvertedAmount = t.ConvertedAmount,
+            TargetCurrency = t.TargetCurrency.ToString(),
+            ConversionRate = t.ConversionRate,
+            CreatedAt = t.CreatedAt,
+            Status = t.Status.ToString(),
+            Type = t.Type.ToString()
+
         }).ToList();
 
         return new PagedResult<TransactionDto>
@@ -156,58 +133,64 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
 
     }
 
-    public async Task RequestDepositAsync(Guid userId, Guid walletId, decimal amount)
+    public async Task RequestDepositAsync(Guid userId, Guid walletId, DepositWithdrawalRequestDto depositRequestDto)
     {
-        var wallet = await _walletRepository.GetByIdAsync(walletId);
+        var wallet = await unitOfWork.Wallets.GetByIdForWriteAsync(walletId);
 
 
         if (wallet == null) throw new NotFoundException("Wallet not found.");
 
         if (wallet.UserId != userId) throw new ForbiddenAccessException("Not your wallet");
 
-        if (amount <= 0 | amount > 1000000) throw new ArgumentOutOfRangeException(nameof(amount), "Invalid Amount");
-
         var newTransaction = new Transaction
         {
             FromId = SystemConstants.SystemWalletId,
             ToId = walletId,
-            OriginalAmount = amount,
+            OriginalAmount = depositRequestDto.Amount,
+            OriginalCurrency = wallet.Currency,
+            ConvertedAmount = depositRequestDto.Amount,
+            TargetCurrency = wallet.Currency,
+            ConversionRate = 1,
             Status = TransactionStatus.Pending,
             Type = TransactionType.Deposit
         };
-        await _transactionRepository.AddAsync(newTransaction);
-        await _unitOfWork.SaveChangesAsync();
-        await _paymentGatewayService.InitiatePayment(newTransaction.Id);
+        await unitOfWork.Transactions.AddAsync(newTransaction);
+        await unitOfWork.SaveChangesAsync();
+        await paymentGatewayService.InitiatePayment(newTransaction.Id);
     }
-    public async Task RequestWithdrawalAsync(Guid userId, Guid walletId, decimal amount)
+    public async Task RequestWithdrawalAsync(Guid userId, Guid walletId, DepositWithdrawalRequestDto withdrawalRequestDto)
     {
-        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+        await using var transaction = await unitOfWork.BeginTransactionAsync();
         try
         {
-            var wallet = await _walletRepository.GetByIdForWriteAsync(walletId);
+            var wallet = await unitOfWork.Wallets.GetByIdForWriteAsync(walletId);
 
             if (wallet == null) throw new NotFoundException("Wallet not found.");
 
             if (wallet.UserId != userId) throw new ForbiddenAccessException("Not your wallet");
 
-            if (amount <= 0 | amount > 1000000) throw new ArgumentOutOfRangeException(nameof(amount), "Invalid Amount");
 
-            if (wallet.AvailableBalance < amount) throw new InsufficientBalanceException("Insufficient Balance");
-            wallet.AvailableBalance -= amount;
+            if (wallet.AvailableBalance < withdrawalRequestDto.Amount) throw new InsufficientBalanceException("Insufficient Balance");
+            wallet.AvailableBalance -= withdrawalRequestDto.Amount;
 
             var newTransaction = new Transaction
             {
                 FromId = SystemConstants.SystemWalletId,
                 ToId = walletId,
-                OriginalAmount = amount,
+                OriginalAmount = withdrawalRequestDto.Amount,
+                OriginalCurrency = wallet.Currency,
+                ConvertedAmount = withdrawalRequestDto.Amount,
+                TargetCurrency = wallet.Currency,
+                ConversionRate = 1,
                 Status = TransactionStatus.Pending,
                 Type = TransactionType.Withdrawal
             };
-            await _transactionRepository.AddAsync(newTransaction);
-            await _unitOfWork.SaveChangesAsync();
+
+            await unitOfWork.Transactions.AddAsync(newTransaction);
+            await unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            await _paymentGatewayService.InitiatePayment(newTransaction.Id);
+            await paymentGatewayService.InitiatePayment(newTransaction.Id);
         }
         catch
         {
@@ -217,19 +200,19 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
     }
     public async Task FinalizePaymentAsync(Guid transactionId, bool isSuccessful)
     {
-        await using var dbTransaction = await _unitOfWork.BeginTransactionAsync();
+        await using var dbTransaction = await unitOfWork.BeginTransactionAsync();
         try
         {
-            var transaction = await _transactionRepository.GetByIdForWriteAsync(transactionId);
+            var transaction = await unitOfWork.Transactions.GetByIdForWriteAsync(transactionId);
 
             if (transaction is null) throw new NotFoundException("Transaction not found.");
             if (transaction.Status != TransactionStatus.Pending) throw new InvalidOperationException("Transaction is not in a pending state.");
 
-            var wallet = await _walletRepository.GetByIdForWriteAsync(transaction.ToId);
+            var wallet = await unitOfWork.Wallets.GetByIdForWriteAsync(transaction.ToId);
             if (wallet is null)
             {
                 transaction.Status = TransactionStatus.Failed;
-                await _unitOfWork.SaveChangesAsync();
+                await unitOfWork.SaveChangesAsync();
                 throw new NotFoundException("CRITICAL: Wallet associated with the transaction was not found.");
             }
 
@@ -262,7 +245,7 @@ public class TransactionService(ITransactionRepository transactionRepository, IW
                     wallet.AvailableBalance += transaction.OriginalAmount;
                 }
             }
-            await _unitOfWork.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync();
             await dbTransaction.CommitAsync();
         }
         catch

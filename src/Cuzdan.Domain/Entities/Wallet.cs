@@ -12,8 +12,8 @@ public class Wallet
 
     public User? User { get; set; }
 
-    public decimal Balance { get; set; }
-    public decimal AvailableBalance { get; set; }
+    public decimal Balance { get; set; } = 0;
+    public decimal AvailableBalance { get; set; } = 0;
 
     public CurrencyType Currency { get; set; }
 

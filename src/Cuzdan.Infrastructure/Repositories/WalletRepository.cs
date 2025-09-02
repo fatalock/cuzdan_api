@@ -9,17 +9,10 @@ namespace Cuzdan.Infrastructure.Repositories;
 public class WalletRepository(CuzdanContext context) : Repository<Wallet>(context), IWalletRepository
 {
 
-    public async Task<List<WalletDto>> GetWalletsAsyc(Guid Id)
+    public async Task<List<Wallet>> GetWalletsAsyc(Guid Id)
     {
         var wallets = await Context.Wallets
             .Where(w => w.UserId == Id)
-            .Select(w => new WalletDto
-            {
-                Id = w.Id,
-                WalletName = w.WalletName,
-                Balance = w.Balance,
-                AvailableBalance = w.AvailableBalance
-            })
             .ToListAsync();
 
         return wallets;
@@ -31,5 +24,10 @@ public class WalletRepository(CuzdanContext context) : Repository<Wallet>(contex
             .AnyAsync(w => w.Id == walletId && w.UserId == userId);
         return walletExists;
     }
-
+    public async Task<IEnumerable<UserBalanceByCurrencyDto>> GetTotalBalancePerCurrencyAsync(Guid userId)
+    {
+        return await Context.Set<UserBalanceByCurrencyDto>()
+            .FromSqlInterpolated($"SELECT * FROM get_user_balance_by_currency({userId})")
+            .ToListAsync();
+    }
 }

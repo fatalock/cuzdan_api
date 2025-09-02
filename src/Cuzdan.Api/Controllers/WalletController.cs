@@ -11,13 +11,12 @@ namespace Cuzdan.Api.Controllers;
 [Authorize]
 public class WalletsController(IWalletService walletService) : ControllerBase
 {
-    private readonly IWalletService _walletService = walletService;
 
     [HttpPost("create")]
     public async Task<IActionResult> Create([FromBody] CreateWalletDto createWalletDto)
     {
         Guid userId = User.GetUserId();
-        var response = await _walletService.CreateWalletAsync(createWalletDto, userId);
+        var response = await walletService.CreateWalletAsync(createWalletDto, userId);
 
         return Ok(response.SuccessMessage);
     }
@@ -27,7 +26,7 @@ public class WalletsController(IWalletService walletService) : ControllerBase
     {
         Guid userId = User.GetUserId();
 
-        var result = await _walletService.GetWalletsAsyc(userId);
+        var result = await walletService.GetWalletsAsyc(userId);
 
         return Ok(new ApiResponse<List<WalletDto>>
         {
@@ -36,5 +35,20 @@ public class WalletsController(IWalletService walletService) : ControllerBase
             SuccessMessage = "Wallets fetched succesfully"
         });
     }
+    [HttpGet("total-balance-per-currency")]
+    public async Task<IActionResult> GetTotalBalancePerCurrencyAsyc()
+    {
+        Guid userId = User.GetUserId();
+
+        var result = await walletService.GetTotalBalancePerCurrencyAsync(userId);
+
+        return Ok(new ApiResponse<List<UserBalanceByCurrencyResponseDto>>
+        {
+            IsSuccessful = true,
+            Data = result,
+            SuccessMessage = "Wallets fetched succesfully"
+        });
+    }
+    
 
 }

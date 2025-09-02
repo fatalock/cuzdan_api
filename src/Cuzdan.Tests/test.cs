@@ -1,15 +1,15 @@
 using Xunit;
 using Moq;
 using Microsoft.Extensions.Caching.Memory;
-using RestSharp;
 using RichardSzalay.MockHttp;
 using FluentAssertions;
 using Cuzdan.Infrastructure.Gateways;
 using Cuzdan.Domain.Enums;
 using System.Threading.Tasks;
+using Castle.Core.Configuration;
+using Microsoft.Extensions.Configuration;
 
-namespace Cuzdan.Tests
-{
+
     public class CurrencyConversionServiceTests
     {
         [Fact] // Bu, xUnit'e bunun bir test metodu olduğunu söyler
@@ -17,17 +17,27 @@ namespace Cuzdan.Tests
         {
             // ARRANGE (Hazırlık) --------------------------------------------------
 
-            // 1. IMemoryCache'i taklit et (Moq)
-            // Cache'in boş olduğunu varsaydığımız için özel bir ayara gerek yok.
-            var mockCache = new MemoryCache(new MemoryCacheOptions());
+/*             var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(...).Respond(...);
+            var httpClient = mockHttp.ToHttpClient(); */
 
-            // 2. API çağrısını taklit et (MockHttp)
-            var httpClient = new HttpClient();
-            var options = new RestClientOptions("https://openexchangerates.orggg");
-            var restClient = new RestClient(httpClient, options);
+            var realCache = new MemoryCache(new MemoryCacheOptions());
 
-            // 4. Servisi, her iki taklit edilmiş bağımlılığı da vererek oluştur
-            var service = new CurrencyConversionService(mockCache, restClient); // <-- DOĞRU KULLANIM
+
+            var realHttpClient = new HttpClient();
+            realHttpClient.BaseAddress = new Uri("https://openexchangerates.org");
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json")
+                .Build();
+            
+            // 3. Gerçek bir Logger oluştur (isteğe bağlı, ama constructor için gerekli).
+            // Basit bir konsol logger'ı oluşturuyoruz.
+
+
+            // 4. Servisi, TAMAMEN GERÇEK bağımlılıklarla oluştur.
+            var service = new CurrencyConversionService(realCache, realHttpClient,configuration);
+            
 
             // ACT (Eylem) ---------------------------------------------------------
             var result = await service.GetConversionRateAsync(CurrencyType.USD, CurrencyType.TRY);
@@ -47,4 +57,3 @@ namespace Cuzdan.Tests
 
 
     }
-}

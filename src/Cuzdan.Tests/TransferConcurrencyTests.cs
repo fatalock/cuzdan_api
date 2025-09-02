@@ -12,8 +12,8 @@ using Xunit;
 using System;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Cuzdan.Domain.Enums;
 
-namespace Cuzdan.Tests.Integration;
 
 // Bu sınıf, tüm testler için API'yi ve veritabanını ayağa kaldırır.
 public class TransferConcurrencyTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
@@ -36,7 +36,7 @@ public class TransferConcurrencyTests(WebApplicationFactory<Program> factory) : 
             Name = "Test User",
             Email = $"test{Guid.NewGuid()}@example.com",
             PasswordHash = "test_hash",
-            Role = "User"
+            Role = UserRole.User
         };
         var senderWallet = new Wallet
         {
@@ -60,8 +60,8 @@ public class TransferConcurrencyTests(WebApplicationFactory<Program> factory) : 
         
         // 2. İki farklı transfer işlemi için DTO'ları hazırla.
         // Toplamları (80 + 70 = 150), bakiyeden (100) daha fazla.
-        var transferRequestA = new TransactionDto { FromId = senderWallet.Id, ToId = receiverWallet.Id, Amount = 80 };
-        var transferRequestB = new TransactionDto { FromId = senderWallet.Id, ToId = receiverWallet.Id, Amount = 70 };
+        var transferRequestA = new CreateTransactionDto { FromId = senderWallet.Id, ToId = receiverWallet.Id, Amount = 80 };
+        var transferRequestB = new CreateTransactionDto { FromId = senderWallet.Id, ToId = receiverWallet.Id, Amount = 70 };
 
 
         // ACT (EYLEM) - YARIŞI BAŞLATMA

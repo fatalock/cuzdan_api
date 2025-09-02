@@ -1,10 +1,9 @@
-using Cuzdan.Application.DTOs;
 using Cuzdan.Domain.Entities;
 
 namespace Cuzdan.Application.Interfaces;
 
-public interface ITransactionRepository : IRepository<Transaction> 
+public interface ITransactionRepository : IRepository<Transaction>
 {
-    Task<PagedResult<TransactionDto>> GetTransactionsByWalletIdAsync(
-        Guid walletId, string type, int page, int pageSize);
+    Task TransferTransactionAsync(Guid FromId, Guid ToId, decimal Amount, decimal conversionRate);
+    
 }

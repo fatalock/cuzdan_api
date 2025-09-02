@@ -12,13 +12,11 @@ namespace Cuzdan.Api.Controllers;
 public class TransactionsController(ITransactionService TransactionService) : ControllerBase
 {
 
-    private readonly ITransactionService _TransactionService = TransactionService;
-
     [HttpPost("transfer")]
-    public async Task<IActionResult> Transfer([FromBody] TransactionDto transactionDto)
+    public async Task<IActionResult> Transfer([FromBody] CreateTransactionDto transactionDto)
     {
         Guid userId = User.GetUserId();
-        var response = await _TransactionService.TransferTransactionAsync(transactionDto, userId);
+        var response = await TransactionService.TransferTransactionAsync(transactionDto, userId);
 
         return Ok(response);
     }
@@ -27,7 +25,7 @@ public class TransactionsController(ITransactionService TransactionService) : Co
     {
         Guid userId = User.GetUserId();
 
-        var result = await _TransactionService.GetTransactionsByWalletAsync(userId, walletId, filter);
+        var result = await TransactionService.GetTransactionsByWalletAsync(userId, walletId, filter);
 
         return Ok(new ApiResponse<PagedResult<TransactionDto>>
         {
@@ -37,11 +35,11 @@ public class TransactionsController(ITransactionService TransactionService) : Co
         });
     }
     [HttpPost("deposit/{walletId}")]
-    public async Task<IActionResult> RequestDepositAsync(Guid walletId, [FromBody] decimal amount)
+    public async Task<IActionResult> RequestDepositAsync(Guid walletId, [FromBody] DepositWithdrawalRequestDto depositRequestDto)
     {
         Guid userId = User.GetUserId();
 
-        await _TransactionService.RequestDepositAsync(userId, walletId, amount);
+        await TransactionService.RequestDepositAsync(userId, walletId, depositRequestDto);
 
         return Ok(new ApiResponse
         {
@@ -50,11 +48,11 @@ public class TransactionsController(ITransactionService TransactionService) : Co
         });
     }
     [HttpPost("withdrawal/{walletId}")]
-    public async Task<IActionResult> RequestWithdrawalAsync(Guid walletId, [FromBody] decimal amount)
+    public async Task<IActionResult> RequestWithdrawalAsync(Guid walletId, [FromBody] DepositWithdrawalRequestDto withdrawalRequestDto)
     {
         Guid userId = User.GetUserId();
 
-        await _TransactionService.RequestWithdrawalAsync(userId, walletId, amount);
+        await TransactionService.RequestWithdrawalAsync(userId, walletId, withdrawalRequestDto);
 
         return Ok(new ApiResponse
         {

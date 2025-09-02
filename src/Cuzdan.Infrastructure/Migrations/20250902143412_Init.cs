@@ -1,16 +1,36 @@
 ﻿using System;
+using Cuzdan.Domain.Enums;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Cuzdan.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class atomicAndTest : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:Enum:currency_type", "try,usd,eur,gbp,jpy")
+                .Annotation("Npgsql:Enum:transaction_status", "pending,completed,failed,cancelled,processing,reversed,expired,on_hold")
+                .Annotation("Npgsql:Enum:transaction_type", "transfer,deposit,withdrawal")
+                .Annotation("Npgsql:Enum:user_role", "user,admin,system");
+
+            migrationBuilder.CreateTable(
+                name: "UserBalanceByCurrencyDto",
+                columns: table => new
+                {
+                    CurrencyType = table.Column<CurrencyType>(type: "currency_type", nullable: false),
+                    TotalBalance = table.Column<decimal>(type: "numeric", nullable: false)
+                },
+                constraints: table =>
+                {
+                });
+
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -20,7 +40,7 @@ namespace Cuzdan.Infrastructure.Migrations
                     Email = table.Column<string>(type: "text", nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Role = table.Column<string>(type: "text", nullable: false)
+                    Role = table.Column<UserRole>(type: "user_role", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -61,6 +81,7 @@ namespace Cuzdan.Infrastructure.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     Balance = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     AvailableBalance = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    Currency = table.Column<CurrencyType>(type: "currency_type", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -81,10 +102,14 @@ namespace Cuzdan.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     FromId = table.Column<Guid>(type: "uuid", nullable: false),
                     ToId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Amount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    OriginalAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    OriginalCurrency = table.Column<CurrencyType>(type: "currency_type", nullable: false),
+                    ConvertedAmount = table.Column<decimal>(type: "numeric", nullable: false),
+                    TargetCurrency = table.Column<CurrencyType>(type: "currency_type", nullable: false),
+                    ConversionRate = table.Column<decimal>(type: "numeric", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    Type = table.Column<int>(type: "integer", nullable: false)
+                    Status = table.Column<TransactionStatus>(type: "transaction_status", nullable: false),
+                    Type = table.Column<TransactionType>(type: "transaction_type", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -106,12 +131,16 @@ namespace Cuzdan.Infrastructure.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreatedAt", "Email", "Name", "PasswordHash", "Role" },
-                values: new object[] { new Guid("00000000-0000-0000-0000-000000000001"), new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "system@cuzdan.local", "System", "", "System" });
+                values: new object[,]
+                {
+                    { new Guid("00000000-0000-0000-0000-000000000001"), new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "system@cuzdan.local", "System", "", UserRole.System },
+                    { new Guid("00000000-0000-0000-0000-000000000003"), new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@cuzdan.local", "Admin", "$2a$11$HogwQY.S0cgV47QbDgFb.eCeW8AUEFH64rgEWPiTbmSPFTpGdz/Wu", UserRole.Admin }
+                });
 
             migrationBuilder.InsertData(
                 table: "Wallets",
-                columns: new[] { "Id", "AvailableBalance", "Balance", "CreatedAt", "UserId", "WalletName" },
-                values: new object[] { new Guid("00000000-0000-0000-0000-000000000002"), 0m, 0m, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), new Guid("00000000-0000-0000-0000-000000000001"), "System Wallet" });
+                columns: new[] { "Id", "AvailableBalance", "Balance", "CreatedAt", "Currency", "UserId", "WalletName" },
+                values: new object[] { new Guid("00000000-0000-0000-0000-000000000002"), 0m, 0m, new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), CurrencyType.TRY, new Guid("00000000-0000-0000-0000-000000000001"), "System Wallet" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_UserId",
@@ -142,6 +171,9 @@ namespace Cuzdan.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Transactions");
+
+            migrationBuilder.DropTable(
+                name: "UserBalanceByCurrencyDto");
 
             migrationBuilder.DropTable(
                 name: "Wallets");

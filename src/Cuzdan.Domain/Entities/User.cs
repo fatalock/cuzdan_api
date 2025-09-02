@@ -1,3 +1,5 @@
+using Cuzdan.Domain.Enums;
+
 namespace Cuzdan.Domain.Entities;
 
 public class User
@@ -13,7 +15,7 @@ public class User
 
     public ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
 
-    public required string Role { get; set; }
+    public required UserRole Role { get; set; }
     
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 

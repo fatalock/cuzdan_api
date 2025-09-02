@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.Linq.Expressions;
 namespace Cuzdan.Application.DTOs;
 
 public class BaseFilter<T> where T : class

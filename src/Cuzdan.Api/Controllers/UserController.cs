@@ -13,14 +13,13 @@ namespace Cuzdan.Api.Controllers;
 public class UserController(IUserService userService) : ControllerBase
 {
 
-    private readonly IUserService _userService = userService;
 
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {
         Guid userId = User.GetUserId();
 
-        var result = await _userService.GetUserProfileAsync(userId);
+        var result = await userService.GetUserProfileAsync(userId);
 
         return Ok(new ApiResponse<UserProfileDto>
         {
@@ -35,7 +34,7 @@ public class UserController(IUserService userService) : ControllerBase
     {
         Guid userId = User.GetUserId();
 
-        await _userService.UpdateUserProfileAsync(userId, updateUserDto);
+        await userService.UpdateUserProfileAsync(userId, updateUserDto);
 
         return Ok(new ApiResponse
         {
