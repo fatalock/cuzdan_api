@@ -21,7 +21,7 @@ public class UserController(IUserService userService) : ControllerBase
 
         var result = await userService.GetUserProfileAsync(userId);
 
-        return Ok(new ApiResponse<UserProfileDto>
+        return Ok(new ApiResponse<UserDto>
         {
             IsSuccessful = true,
             Data = result,
@@ -34,11 +34,12 @@ public class UserController(IUserService userService) : ControllerBase
     {
         Guid userId = User.GetUserId();
 
-        await userService.UpdateUserProfileAsync(userId, updateUserDto);
+        var result = await userService.UpdateUserProfileAsync(userId, updateUserDto);
 
-        return Ok(new ApiResponse
+        return Ok(new ApiResponse<UserDto>
         {
             IsSuccessful = true,
+            Data = result,
             SuccessMessage = "Profile updated successfully."
         });
     }

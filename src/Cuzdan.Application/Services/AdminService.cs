@@ -10,7 +10,7 @@ namespace Cuzdan.Application.Services;
 
 public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 {
-    public async Task<PagedResult<AdminUserDto>> GetAllUsersProfileAsync(UserFilterDto filter)
+    public async Task<PagedResult<UserDto>> GetAllUsersProfileAsync(UserFilterDto filter)
     {
         if (filter.PageNumber < 1) filter.PageNumber = 1;
         if (filter.PageSize < 1 || filter.PageSize > 100) filter.PageSize = 10;
@@ -59,7 +59,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
             isDescending: filter.IsDescending ?? true
         );
 
-        var userDtos = (pagedUsers.Items ?? Enumerable.Empty<User>()).Select(user => new AdminUserDto
+        var userDtos = (pagedUsers.Items ?? Enumerable.Empty<User>()).Select(user => new UserDto
         {
             Id = user.Id,
             Name = user.Name,
@@ -68,7 +68,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
             CreatedAt = user.CreatedAt
         }).ToList();
 
-        return new PagedResult<AdminUserDto>
+        return new PagedResult<UserDto>
         {
             Page = pagedUsers.Page,
             PageSize = pagedUsers.PageSize,
@@ -76,12 +76,12 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
             Items = userDtos
         };
     }
-    public async Task<AdminUserDto> GetUserProfileAsync(Guid userId)
+    public async Task<UserDto> GetUserProfileAsync(Guid userId)
     {
         var user = await unitOfWork.Users.GetByIdAsync(userId);
         if (user == null) throw new NotFoundException("User not found.");
 
-        return new AdminUserDto
+        return new UserDto
         {
             Id = user.Id,
             Name = user.Name,
@@ -91,7 +91,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         };
     }
 
-    public async Task<PagedResult<AdminWalletDto>> GetAllWalletsAsyc(WalletFilterDto filter)
+    public async Task<PagedResult<WalletDto>> GetAllWalletsAsync(WalletFilterDto filter)
     {
         if (filter.PageNumber < 1) filter.PageNumber = 1;
         if (filter.PageSize < 1 || filter.PageSize > 100) filter.PageSize = 10;
@@ -148,7 +148,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
             isDescending: filter.IsDescending ?? true // Varsayılan azalan sıralama
         );
 
-        var walletDtos = (pagedWallets.Items ?? Enumerable.Empty<Wallet>()).Select(wallet => new AdminWalletDto
+        var walletDtos = (pagedWallets.Items ?? Enumerable.Empty<Wallet>()).Select(wallet => new WalletDto
         {
             Id = wallet.Id,
             WalletName = wallet.WalletName,
@@ -157,7 +157,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
             CreatedAt = wallet.CreatedAt
         }).ToList();
 
-        return new PagedResult<AdminWalletDto>
+        return new PagedResult<WalletDto>
         {
             Page = pagedWallets.Page,
             PageSize = pagedWallets.PageSize,
@@ -166,10 +166,10 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         };
     }
 
-    public async Task<List<AdminWalletDto>> GetUserWalletsAsyc(Guid userId)
+    public async Task<List<WalletDto>> GetUserWalletsAsync(Guid userId)
     {
-        var wallets = await unitOfWork.Wallets.GetWalletsAsyc(userId);
-        var walletDtos = wallets.Select(wallet => new AdminWalletDto
+        var wallets = await unitOfWork.Wallets.GetWalletsAsync(userId);
+        var walletDtos = wallets.Select(wallet => new WalletDto
         {
             Id = wallet.Id,
             WalletName = wallet.WalletName,
@@ -184,7 +184,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
     }
 
 
-    public async Task<PagedResult<AdminTransactionDto>> GetAllTransactionsAsync(
+    public async Task<PagedResult<TransactionDto>> GetAllTransactionsAsync(
         TransactionFilterDto filter
     )
     {
@@ -238,7 +238,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
 
 
-        var transactionDtos = (pagedTransactions.Items ?? Enumerable.Empty<Transaction>()).Select(t => new AdminTransactionDto
+        var transactionDtos = (pagedTransactions.Items ?? Enumerable.Empty<Transaction>()).Select(t => new TransactionDto
         {
             Id = t.Id,
             FromId = t.FromId,
@@ -254,7 +254,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
         }).ToList();
 
-        return new PagedResult<AdminTransactionDto>
+        return new PagedResult<TransactionDto>
         {
             Page = pagedTransactions.Page,
             PageSize = pagedTransactions.PageSize,
@@ -263,7 +263,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         };
     }
 
-    public async Task<PagedResult<AdminTransactionDto>> GetTransactionsByWalletAsync(
+    public async Task<PagedResult<TransactionDto>> GetTransactionsByWalletAsync(
 
         Guid walletId,
         TransactionFilterDto filter
@@ -322,7 +322,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
 
 
-        var transactionDtos = (pagedTransactions.Items ?? Enumerable.Empty<Transaction>()).Select(t => new AdminTransactionDto
+        var transactionDtos = (pagedTransactions.Items ?? Enumerable.Empty<Transaction>()).Select(t => new TransactionDto
         {
             Id = t.Id,
             FromId = t.FromId,
@@ -338,7 +338,7 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
         }).ToList();
 
-        return new PagedResult<AdminTransactionDto>
+        return new PagedResult<TransactionDto>
         {
             Page = pagedTransactions.Page,
             PageSize = pagedTransactions.PageSize,
@@ -346,13 +346,13 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
             Items = transactionDtos
         };
     }
-    public async Task<AdminTransactionDto> GetTransactionAsync(
+    public async Task<TransactionDto> GetTransactionAsync(
         Guid transactionId
     )
     {
         var t = await unitOfWork.Transactions.GetByIdAsync(transactionId);
         if (t == null) throw new NotFoundException("Transaction not found.");
-        return new AdminTransactionDto
+        return new TransactionDto
         {
             Id = t.Id,
             FromId = t.FromId,

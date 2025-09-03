@@ -5,7 +5,7 @@
 namespace Cuzdan.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Fun : Migration
+    public partial class FunctionAndProcedures : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

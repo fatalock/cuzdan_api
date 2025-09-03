@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Cuzdan.Infrastructure.Migrations
 {
     [DbContext(typeof(CuzdanContext))]
-    [Migration("20250902145350_Validator")]
-    partial class Validator
+    [Migration("20250903121451_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -16,9 +16,13 @@ public class TransactionsController(ITransactionService TransactionService) : Co
     public async Task<IActionResult> Transfer([FromBody] CreateTransactionDto transactionDto)
     {
         Guid userId = User.GetUserId();
-        var response = await TransactionService.TransferTransactionAsync(transactionDto, userId);
+        await TransactionService.TransferTransactionAsync(transactionDto, userId);
 
-        return Ok(response);
+        return Ok(new ApiResponse
+        {
+            IsSuccessful = true,
+            SuccessMessage = "Funds transfered succesfully"
+        });
     }
     [HttpPost("wallet_history/{walletId}")]
     public async Task<IActionResult> GetTransactionsByWalletAsync(Guid walletId, [FromBody] TransactionFilterDto filter)

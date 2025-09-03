@@ -16,7 +16,7 @@ public class TransactionService(
     ICurrencyConversionService currencyConversionService) : ITransactionService
 {
 
-    public async Task<ApiResponse> TransferTransactionAsync(CreateTransactionDto transactionDto, Guid UserId)
+    public async Task TransferTransactionAsync(CreateTransactionDto transactionDto, Guid userId)
     {
 
         var senderWallet = await unitOfWork.Wallets.GetByIdAsync(transactionDto.FromId);
@@ -25,7 +25,7 @@ public class TransactionService(
 
         if (senderWallet == null || receiverWallet == null) throw new NotFoundException("Wallet not found.");
 
-        if (senderWallet.UserId != UserId) throw new ForbiddenAccessException("Not your wallet");
+        if (senderWallet.UserId != userId) throw new ForbiddenAccessException("Not your wallet");
 
         if (senderWallet.AvailableBalance < transactionDto.Amount) throw new InsufficientBalanceException("Not enough balance");
 
@@ -33,13 +33,6 @@ public class TransactionService(
 
         await unitOfWork.Transactions.TransferTransactionAsync(transactionDto.FromId, transactionDto.ToId, transactionDto.Amount, conversionRate);
 
-        var response = new ApiResponse
-        {
-            IsSuccessful = true,
-            SuccessMessage = "Transaction done",
-        };
-
-        return response;
     }
 
     public async Task<PagedResult<TransactionDto>> GetTransactionsByWalletAsync(
@@ -113,13 +106,13 @@ public class TransactionService(
             FromId = t.FromId,
             ToId = t.ToId,
             Amount = t.OriginalAmount,
-            OriginalCurrency = t.OriginalCurrency.ToString(),
+            OriginalCurrency = t.OriginalCurrency,
             ConvertedAmount = t.ConvertedAmount,
-            TargetCurrency = t.TargetCurrency.ToString(),
+            TargetCurrency = t.TargetCurrency,
             ConversionRate = t.ConversionRate,
             CreatedAt = t.CreatedAt,
-            Status = t.Status.ToString(),
-            Type = t.Type.ToString()
+            Status = t.Status,
+            Type = t.Type
 
         }).ToList();
 

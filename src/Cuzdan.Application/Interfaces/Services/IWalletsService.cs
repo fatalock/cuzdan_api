@@ -4,9 +4,9 @@ namespace Cuzdan.Application.Interfaces;
 
 public interface IWalletService
 {
-    Task<ApiResponse> CreateWalletAsync(CreateWalletDto createWalletDto, Guid Id);
-    Task<List<WalletDto>> GetWalletsAsyc(Guid Id);
+    Task<WalletDto> CreateWalletAsync(CreateWalletDto createWalletDto, Guid userId);
+    Task<List<WalletDto>> GetWalletsAsync(Guid userId);
 
-    Task<List<UserBalanceByCurrencyResponseDto>> GetTotalBalancePerCurrencyAsync(Guid Id);
+    Task<List<UserBalanceByCurrencyResponseDto>> GetTotalBalancePerCurrencyAsync(Guid userId);
 
 }

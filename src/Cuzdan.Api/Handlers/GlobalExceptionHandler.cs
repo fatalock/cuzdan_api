@@ -5,7 +5,7 @@ using Cuzdan.Application.Exceptions;
 
 namespace Cuzdan.Api.Handlers;
 
-public class GlobalExceptionHandler : IExceptionHandler
+public partial class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
@@ -29,6 +29,15 @@ public class GlobalExceptionHandler : IExceptionHandler
             _ => HttpStatusCode.InternalServerError                         // 500
         };
 
+        if (statusCode == HttpStatusCode.InternalServerError)
+        {
+            LogUnhandledException(logger, exception, httpContext.Request.Path);
+        }
+        else
+        {
+            LogClientErrorWarning(logger, exception.Message, exception);
+        }
+
         var problemDetails = new ProblemDetails
         {
             Status = (int)statusCode,
@@ -44,4 +53,15 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         return true;
     }
+    [LoggerMessage(
+        EventId = 1,
+        Level = LogLevel.Error,
+        Message = "An unhandled exception occurred. Path: {Path}")]
+    private static partial void LogUnhandledException(ILogger logger, Exception ex, string path);
+    
+    [LoggerMessage(
+        EventId = 2,
+        Level = LogLevel.Warning,
+        Message = "A client-side error occurred: {ErrorMessage}")]
+    private static partial void LogClientErrorWarning(ILogger logger, string errorMessage, Exception ex);
 }

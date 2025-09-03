@@ -13,11 +13,12 @@ public class AuthController(IAuthService authService) : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
     {
 
-        await authService.RegisterAsync(registerDto);
+        var result = await authService.RegisterAsync(registerDto);
 
-        return Ok(new ApiResponse
+        return Ok(new ApiResponse<UserDto>
         {
             IsSuccessful = true,
+            Data = result,
             SuccessMessage = "User registered succesfully"
         });
     }
@@ -25,16 +26,26 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
     {
-        var response = await authService.LoginAsync(loginDto);
+        var result = await authService.LoginAsync(loginDto);
 
-        return Ok(response);
+        return Ok(new ApiResponse<AuthResult>
+        {
+            IsSuccessful = true,
+            Data = result,
+            SuccessMessage = "User registered succesfully"
+        });
     }
 
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] string refreshToken)
     {
-        var response = await authService.RefresAccesshAsync(refreshToken);
+        var result = await authService.RefresAccesshAsync(refreshToken);
 
-        return Ok(response);
+        return Ok(new ApiResponse<AuthResult>
+        {
+            IsSuccessful = true,
+            Data = result,
+            SuccessMessage = "User registered succesfully"
+        });
     }
 }

@@ -17,7 +17,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
     {
         var result = await adminService.GetAllUsersProfileAsync(filter);
 
-        return Ok(new ApiResponse<PagedResult<AdminUserDto>>
+        return Ok(new ApiResponse<PagedResult<UserDto>>
         {
             IsSuccessful = true,
             Data = result,
@@ -29,7 +29,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
     {
         var result = await adminService.GetUserProfileAsync(userId);
 
-        return Ok(new ApiResponse<AdminUserDto>
+        return Ok(new ApiResponse<UserDto>
         {
             IsSuccessful = true,
             Data = result,
@@ -38,13 +38,13 @@ public class AdminController(IAdminService adminService) : ControllerBase
     }
 
     [HttpPost("wallets")]
-    public async Task<IActionResult> GetAllWalletsAsyc([FromBody] WalletFilterDto filter)
+    public async Task<IActionResult> GetAllWalletsAsync([FromBody] WalletFilterDto filter)
     {
         
 
-        var result = await adminService.GetAllWalletsAsyc(filter);
+        var result = await adminService.GetAllWalletsAsync(filter);
 
-        return Ok(new ApiResponse<PagedResult<AdminWalletDto>>
+        return Ok(new ApiResponse<PagedResult<WalletDto>>
         {
             IsSuccessful = true,
             Data = result,
@@ -52,13 +52,13 @@ public class AdminController(IAdminService adminService) : ControllerBase
         });
     }
     [HttpGet("wallets/{userId}")]
-    public async Task<IActionResult> GetUserWalletsAsyc(Guid userId)
+    public async Task<IActionResult> GetUserWalletsAsync(Guid userId)
     {
         
 
-        var result = await adminService.GetUserWalletsAsyc(userId);
+        var result = await adminService.GetUserWalletsAsync(userId);
 
-        return Ok(new ApiResponse<List<AdminWalletDto>>
+        return Ok(new ApiResponse<List<WalletDto>>
         {
             IsSuccessful = true,
             Data = result,
@@ -73,7 +73,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
 
         var result = await adminService.GetAllTransactionsAsync(filter);
 
-        return Ok(new ApiResponse<PagedResult<AdminTransactionDto>>
+        return Ok(new ApiResponse<PagedResult<TransactionDto>>
         {
             IsSuccessful = true,
             Data = result,
@@ -89,7 +89,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
 
         var result = await adminService.GetTransactionsByWalletAsync(walletId, filter);
 
-        return Ok(new ApiResponse<PagedResult<AdminTransactionDto>>
+        return Ok(new ApiResponse<PagedResult<TransactionDto>>
         {
             IsSuccessful = true,
             Data = result,
@@ -103,7 +103,7 @@ public class AdminController(IAdminService adminService) : ControllerBase
 
         var result = await adminService.GetTransactionAsync(transactionId);
 
-        return Ok(new ApiResponse<AdminTransactionDto>
+        return Ok(new ApiResponse<TransactionDto>
         {
             IsSuccessful = true,
             Data = result,SuccessMessage = "Profile fetched successfully."

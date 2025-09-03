@@ -9,7 +9,7 @@ public class WalletService(IUnitOfWork unitOfWork) : IWalletService
 {
 
 
-    public async Task<ApiResponse> CreateWalletAsync(CreateWalletDto createWalletDto, Guid Id)
+    public async Task<WalletDto> CreateWalletAsync(CreateWalletDto createWalletDto, Guid Id)
     {
 
 
@@ -23,18 +23,21 @@ public class WalletService(IUnitOfWork unitOfWork) : IWalletService
         await unitOfWork.Wallets.AddAsync(newWallet);
         await unitOfWork.SaveChangesAsync();
 
-        var response = new ApiResponse
+        var walletDtoToReturn = new WalletDto
         {
-            IsSuccessful = true,
-            SuccessMessage = "Wallet Created",
+            Id = newWallet.Id,
+            WalletName = newWallet.WalletName,
+            Balance = newWallet.Balance,
+            Currency = newWallet.Currency,
+            CreatedAt = newWallet.CreatedAt
         };
 
-        return response;
+        return walletDtoToReturn;
     }
 
-    public async Task<List<WalletDto>> GetWalletsAsyc(Guid Id)
+    public async Task<List<WalletDto>> GetWalletsAsync(Guid Id)
     {
-        var wallets = await unitOfWork.Wallets.GetWalletsAsyc(Id);
+        var wallets = await unitOfWork.Wallets.GetWalletsAsync(Id);
         var walletDtos = wallets.Select(wallet => new WalletDto
         {
             Id = wallet.Id,

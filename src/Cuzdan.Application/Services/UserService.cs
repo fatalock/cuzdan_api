@@ -8,24 +8,26 @@ public class UserService(IUnitOfWork unitOfWork) : IUserService
 {
 
 
-    public async Task<UserProfileDto> GetUserProfileAsync(Guid Id)
+    public async Task<UserDto> GetUserProfileAsync(Guid userId)
     {
-        var user = await unitOfWork.Users.GetByIdAsync(Id);
+        var user = await unitOfWork.Users.GetByIdAsync(userId);
 
         if (user == null) throw new NotFoundException("User not found.");
 
 
-        return new UserProfileDto
+        return new UserDto
         {
+            Id = user.Id,
             Name = user.Name,
             Email = user.Email,
+            Role = user.Role,
             CreatedAt = user.CreatedAt,
         };
     }
 
-    public async Task UpdateUserProfileAsync(Guid userId, UpdateUserDto updateUserDto)
+    public async Task<UserDto> UpdateUserProfileAsync(Guid userId, UpdateUserDto updateUserDto)
     {
-                
+
         var user = await unitOfWork.Users.GetByIdAsync(userId);
         if (user is null) throw new NotFoundException("User not found.");
 
@@ -43,6 +45,15 @@ public class UserService(IUnitOfWork unitOfWork) : IUserService
         }
 
         await unitOfWork.SaveChangesAsync(CancellationToken.None);
+
+        return new UserDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt,
+        };
     }
     
 }

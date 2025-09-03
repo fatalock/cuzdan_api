@@ -9,7 +9,7 @@ namespace Cuzdan.Infrastructure.Repositories;
 public class WalletRepository(CuzdanContext context) : Repository<Wallet>(context), IWalletRepository
 {
 
-    public async Task<List<Wallet>> GetWalletsAsyc(Guid Id)
+    public async Task<List<Wallet>> GetWalletsAsync(Guid Id)
     {
         var wallets = await Context.Wallets
             .Where(w => w.UserId == Id)

@@ -16,93 +16,123 @@ using System.Text.Json.Serialization;
 using FluentValidation;
 using Cuzdan.Application.Validators;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using Serilog;
+using Cuzdan.Application.Decorators;
 
-var builder = WebApplication.CreateBuilder(args);
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json")
+    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true)
+    .Build();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-
-dataSourceBuilder.MapEnum<UserRole>("user_role");
-dataSourceBuilder.MapEnum<CurrencyType>("currency_type");
-dataSourceBuilder.MapEnum<TransactionStatus>("transaction_status");
-dataSourceBuilder.MapEnum<TransactionType>("transaction_type");
-
-var dataSource = dataSourceBuilder.Build();
-
-builder.Services.AddDbContext<CuzdanContext>(options =>
-        options.UseNpgsql(
-        dataSource,
-        o =>
-        {
-            o.MapEnum<CurrencyType>("currency_type");
-            o.MapEnum<TransactionStatus>("transaction_status");
-            o.MapEnum<TransactionType>("transaction_type");
-            o.MapEnum<UserRole>("user_role");
-        }
-    )
-);
-
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IWalletService, WalletService>();
-builder.Services.AddScoped<ITransactionService, TransactionService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IAdminService, AdminService>();
-
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
-builder.Services.AddScoped<IWalletRepository, WalletRepository>();
-builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>(); 
-builder.Services.AddHttpClient<ICurrencyConversionService, CurrencyConversionService>(client =>
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(configuration)
+    .CreateBootstrapLogger();
+try
 {
-    client.BaseAddress = new Uri("https://openexchangerates.org");
-});
+    Log.Information("Application Starting...");
 
-builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+    var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddMemoryCache(); 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
+
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+
+    dataSourceBuilder.MapEnum<UserRole>("user_role");
+    dataSourceBuilder.MapEnum<CurrencyType>("currency_type");
+    dataSourceBuilder.MapEnum<TransactionStatus>("transaction_status");
+    dataSourceBuilder.MapEnum<TransactionType>("transaction_type");
+
+    var dataSource = dataSourceBuilder.Build();
+
+    builder.Services.AddDbContext<CuzdanContext>(options =>
+            options.UseNpgsql(
+            dataSource,
+            o =>
+            {
+                o.MapEnum<CurrencyType>("currency_type");
+                o.MapEnum<TransactionStatus>("transaction_status");
+                o.MapEnum<TransactionType>("transaction_type");
+                o.MapEnum<UserRole>("user_role");
+            }
+        )
+    );
+
+    builder.Host.UseSerilog();
+
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+    builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+    builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.Decorate<IAuthService, LoggingAuthServiceDecorator>();
+
+    builder.Services.AddScoped<IWalletService, WalletService>();
+    builder.Services.Decorate<IWalletService, LoggingWalletServiceDecorator>();
+
+    builder.Services.AddScoped<ITransactionService, TransactionService>();
+    builder.Services.Decorate<ITransactionService, LoggingTransactionServiceDecorator>();
+
+    builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.Decorate<IUserService, LoggingUserServiceDecorator>();
+
+    builder.Services.AddScoped<IAdminService, AdminService>();
+    builder.Services.Decorate<IAdminService, LoggingAdminServiceDecorator>();
+
+    builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+    builder.Services.AddScoped<IUserRepository, UserRepository>();
+    builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+    builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+    builder.Services.AddScoped<IWalletRepository, WalletRepository>();
+    builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+    builder.Services.AddHttpClient<ICurrencyConversionService, CurrencyConversionService>(client =>
     {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        client.BaseAddress = new Uri("https://openexchangerates.org");
     });
-builder.Services.AddHttpClient();
-builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserDtoValidator).Assembly);
-builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
+    builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+
+
+    builder.Services.AddMemoryCache();
+    builder.Services.AddControllers()
+        .AddJsonOptions(options =>
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
-                .GetBytes(builder.Configuration.GetSection("Jwt:Key").Value!)),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration.GetSection("Jwt:Issuer").Value,
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration.GetSection("Jwt:Audience").Value
-        };
-    });
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
+    builder.Services.AddHttpClient();
+    builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserDtoValidator).Assembly);
+    builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        Description = "Lütfen JWT token'ınızı bu alana girin."
-    });
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
+                    .GetBytes(builder.Configuration.GetSection("Jwt:Key").Value!)),
+                ValidateIssuer = true,
+                ValidIssuer = builder.Configuration.GetSection("Jwt:Issuer").Value,
+                ValidateAudience = true,
+                ValidAudience = builder.Configuration.GetSection("Jwt:Audience").Value
+            };
+        });
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(options =>
     {
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Please enter your JWT token in this field."
+        });
+
+        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
         {
             new OpenApiSecurityScheme
             {
@@ -114,25 +144,37 @@ builder.Services.AddSwaggerGen(options =>
             },
             new List<string>()
         }
+        });
     });
-});
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
-var app = builder.Build();
+    builder.Services.AddProblemDetails();
+    var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseExceptionHandler();
+    app.UseSerilogRequestLogging();
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    Log.Information("Application is Running");
+    app.Run();
+
 }
-app.UseExceptionHandler(); 
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
-
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.Information("Application is shutting down...");
+    Log.CloseAndFlush();
+}
 public partial class Program { }

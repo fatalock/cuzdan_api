@@ -9,4 +9,5 @@ public class WalletDto
     public decimal Balance { get; set; }
     public decimal AvailableBalance { get; set; }
     public CurrencyType Currency { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

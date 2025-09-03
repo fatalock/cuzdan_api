@@ -10,8 +10,8 @@ namespace Cuzdan.Application.Services;
 
 public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitOfWork) : IAuthService
 {
-    
-    public async Task RegisterAsync(RegisterUserDto registerDto)
+
+    public async Task<UserDto> RegisterAsync(RegisterUserDto registerDto)
     {
         if (await unitOfWork.Users.GetUserByEmailAsync(registerDto.Email) != null) throw new ConflictException("Email already exist");
 
@@ -28,8 +28,16 @@ public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitO
 
         await unitOfWork.Users.AddAsync(newUser);
         await unitOfWork.SaveChangesAsync();
+        return new UserDto
+        {
+            Id = newUser.Id,
+            Name = newUser.Name,
+            Email = newUser.Email,
+            CreatedAt = newUser.CreatedAt,
+            Role = newUser.Role,
+        };
     }
-    public async Task<ApiResponse<AuthResult>> LoginAsync(LoginUserDto loginDto)
+    public async Task<AuthResult> LoginAsync(LoginUserDto loginDto)
     {
 
         var user = await unitOfWork.Users.GetUserByEmailAsync(loginDto.Email);
@@ -44,10 +52,10 @@ public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitO
         await unitOfWork.RefreshTokens.AddAsync(refreshToken);
         await unitOfWork.SaveChangesAsync();
 
-        return new ApiResponse<AuthResult> { IsSuccessful = true, SuccessMessage = "Login succesful", Data = new AuthResult{ AccessToken = accessToken, RefreshToken = refreshToken.Token } };
+        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken.Token, UserId = user.Id} ;
     }
 
-    public async Task<ApiResponse<string>> RefresAccesshAsync(string refreshToken)
+    public async Task<AuthResult> RefresAccesshAsync(string refreshToken)
     {
         var storedToken = await unitOfWork.RefreshTokens.GetRefreshTokenByTokenAsync(refreshToken);
 
@@ -62,7 +70,7 @@ public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitO
         if (user == null) throw new NotFoundException("User not exist.");
   
         var accessToken = jwtTokenGenerator.GenerateAccessToken(user);
-        return new ApiResponse<string> { IsSuccessful = true, SuccessMessage = "New access token granted", Data = accessToken};
+        return new AuthResult{AccessToken = accessToken, RefreshToken = refreshToken, UserId = user.Id};
     }
     
     private static RefreshToken GenerateRefreshToken(Guid userId)

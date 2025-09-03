@@ -16,17 +16,22 @@ public class WalletsController(IWalletService walletService) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateWalletDto createWalletDto)
     {
         Guid userId = User.GetUserId();
-        var response = await walletService.CreateWalletAsync(createWalletDto, userId);
+        var result = await walletService.CreateWalletAsync(createWalletDto, userId);
 
-        return Ok(response.SuccessMessage);
+        return Ok(new ApiResponse<WalletDto>
+        {
+            IsSuccessful = true,
+            Data = result,
+            SuccessMessage = "Wallets fetched succesfully"
+        });
     }
 
     [HttpGet()]
-    public async Task<IActionResult> GetWalletsAsyc()
+    public async Task<IActionResult> GetWalletsAsync()
     {
         Guid userId = User.GetUserId();
 
-        var result = await walletService.GetWalletsAsyc(userId);
+        var result = await walletService.GetWalletsAsync(userId);
 
         return Ok(new ApiResponse<List<WalletDto>>
         {
@@ -36,7 +41,7 @@ public class WalletsController(IWalletService walletService) : ControllerBase
         });
     }
     [HttpGet("total-balance-per-currency")]
-    public async Task<IActionResult> GetTotalBalancePerCurrencyAsyc()
+    public async Task<IActionResult> GetTotalBalancePerCurrencyAsync()
     {
         Guid userId = User.GetUserId();
 

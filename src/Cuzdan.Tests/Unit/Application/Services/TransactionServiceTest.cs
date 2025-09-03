@@ -60,12 +60,9 @@ public class TransactionServiceTests
                             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _service.TransferTransactionAsync(dto, userId);
+        await _service.TransferTransactionAsync(dto, userId);
 
         // Assert
-        Assert.True(result.IsSuccessful);
-        Assert.Equal("Transaction done", result.SuccessMessage);
-
         _transactionRepoMock.Verify(r => r.TransferTransactionAsync(fromWalletId, toWalletId, dto.Amount, 0.9m), Times.Once);
     }
 }

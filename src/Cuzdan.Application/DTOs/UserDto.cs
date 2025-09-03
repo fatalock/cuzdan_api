@@ -1,7 +1,7 @@
 using Cuzdan.Domain.Enums;
 
 namespace Cuzdan.Application.DTOs;
-public class AdminUserDto
+public class UserDto
 {
     public Guid Id { get; set; }
     public required string Name { get; set; }

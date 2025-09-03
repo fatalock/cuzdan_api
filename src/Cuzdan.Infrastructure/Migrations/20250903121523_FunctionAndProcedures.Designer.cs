@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Cuzdan.Infrastructure.Migrations
 {
     [DbContext(typeof(CuzdanContext))]
-    [Migration("20250902144207_Fun")]
-    partial class Fun
+    [Migration("20250903121523_FunctionAndProcedures")]
+    partial class FunctionAndProcedures
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
