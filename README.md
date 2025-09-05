@@ -146,7 +146,7 @@ dotnet run --project src/Cuzdan.Api
 dotnet ef database drop --force --project src/Cuzdan.Infrastructure --startup-project src/Cuzdan.Api
 ```
 
-The API will be available at `https://localhost:5047`.
+The API will be available at `http://localhost:5047/swagger`.
 
 Note that admin password is "admin123"
 
@@ -154,7 +154,7 @@ Note that admin password is "admin123"
 
 You can explore all endpoints and documentation via the Swagger UI:
 
-[https://localhost:5047/swagger](https://localhost:5047/swagger)
+[http://localhost:5047/swagger](http://localhost:5047/swagger)
 
 ## 🧪 Testing
 
