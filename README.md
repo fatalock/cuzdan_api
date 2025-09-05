@@ -92,8 +92,8 @@ Update the following fields in `src/Cuzdan.Api/appsettings.json`:
 ```json
 "Jwt": {
   "Key": "your-super-secret-key-that-is-long-enough",
-  "Issuer": "https://localhost:5001",
-  "Audience": "https://localhost:5001"
+  "Issuer": "https://localhost:5107",
+  "Audience": "https://localhost:5107"
 }
 ```
 
@@ -146,7 +146,7 @@ dotnet run --project src/Cuzdan.Api
 dotnet ef database drop --force --project src/Cuzdan.Infrastructure --startup-project src/Cuzdan.Api
 ```
 
-The API will be available at `https://localhost:5001`.
+The API will be available at `https://localhost:5047`.
 
 Note that admin password is "admin123"
 
@@ -154,7 +154,7 @@ Note that admin password is "admin123"
 
 You can explore all endpoints and documentation via the Swagger UI:
 
-[https://localhost:5001/swagger](https://localhost:5001/swagger)
+[https://localhost:5047/swagger](https://localhost:5047/swagger)
 
 ## 🧪 Testing
 
