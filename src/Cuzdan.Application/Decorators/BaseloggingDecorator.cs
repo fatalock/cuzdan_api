@@ -16,7 +16,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         {
             return await action();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             throw;
         }
@@ -35,7 +35,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         {
             await action();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             throw;
@@ -55,7 +55,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         {
             return await action();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             throw;
@@ -75,7 +75,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         {
             await action();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             throw;
@@ -95,7 +95,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         {
             return await action();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             throw;
@@ -115,7 +115,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         {
             await action();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
             throw;

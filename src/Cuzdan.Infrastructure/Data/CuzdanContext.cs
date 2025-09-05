@@ -65,7 +65,7 @@ public class CuzdanContext(DbContextOptions<CuzdanContext> options) : DbContext(
                 Id = SystemConstants.AdminUserId,
                 Name = "Admin",
                 Email = "admin@cuzdan.local",
-                PasswordHash = "$2a$11$HogwQY.S0cgV47QbDgFb.eCeW8AUEFH64rgEWPiTbmSPFTpGdz/Wu",
+                PasswordHash = "$2a$11$2PmkLLThOwinpu5hDWfCAel78J6gQSEaQt5T6P6jCJC0r2pv4VSja", // admin123
                 Role = UserRole.Admin,
                 CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }

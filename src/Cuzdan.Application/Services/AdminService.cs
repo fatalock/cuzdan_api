@@ -191,6 +191,9 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
         TransactionFilterDto filter
     )
     {
+        if (filter.PageNumber < 1) filter.PageNumber = 1;
+        if (filter.PageSize < 1 || filter.PageSize > 100) filter.PageSize = 10;
+
         var predicate = PredicateBuilder.True<Transaction>();
         if (filter.Type.HasValue)
         {
@@ -274,6 +277,8 @@ public class AdminService(IUnitOfWork unitOfWork) : IAdminService
 
     )
     {
+        if (filter.PageNumber < 1) filter.PageNumber = 1;
+        if (filter.PageSize < 1 || filter.PageSize > 100) filter.PageSize = 10;
         var predicate = PredicateBuilder.True<Transaction>();
         predicate = predicate.And(t => t.FromId == walletId || t.ToId == walletId);
         if (filter.Status.HasValue)

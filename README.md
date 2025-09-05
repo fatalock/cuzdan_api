@@ -40,6 +40,8 @@ Additionally, cross-cutting concerns (e.g., logging) are dynamically applied usi
 - **Documentation:** Swashbuckle (Swagger)
 - **Dependency Injection:** Scrutor
 - **Testing:** xUnit, Moq, FluentAssertions
+- **Password Hashing:** BCrypt.Net.BCrypt is used for secure password hashing.  
+  > Note: BCrypt is intentionally slow by design to increase security against brute-force attacks. This may cause login operations to be slower than typical hash algorithms.
 
 ## ✨ Features
 
@@ -67,6 +69,14 @@ git clone https://your-repository-url.com
 cd cuzdan_test
 ```
 
+All required NuGet packages are already listed in the `.csproj` files.  
+After cloning the repository, simply run:
+>
+```bash
+dotnet restore
+```
+This will automatically install all dependencies.
+
 ### 2. Configure Settings
 
 Update the following fields in `src/Cuzdan.Api/appsettings.json`:
@@ -87,19 +97,19 @@ Update the following fields in `src/Cuzdan.Api/appsettings.json`:
 }
 ```
 
-### 3. Add Initial Migration
+### 3. Add Initial Migration (if migrations do not exist)
+
+If the `src/Cuzdan.Infrastructure/Migrations` folder does **not** exist, create the initial migration:
 
 ```bash
 dotnet ef migrations add Init --project src/Cuzdan.Infrastructure --startup-project src/Cuzdan.Api
 ```
 
-### 4. Add Function And Procedure Migration
+### 4. Add Function And Procedure Migration (if migrations do not exist)
 
 ```bash
 dotnet ef migrations add FunAndPro --project src/Cuzdan.Infrastructure --startup-project src/Cuzdan.Api
 ```
-
-### 5. Copy Sql code to Function And Procedure Migration
 
 After creating the `FunAndPro` migration, copy the SQL code from `src/Cuzdan.Infrastructure/Sql_func_procedure.txt` and paste it into the appropriate section of the newly generated migration file (usually inside the `Up` and `Down` methods). This ensures your functions and procedures are applied to the database during migration.
 
@@ -137,6 +147,8 @@ dotnet ef database drop --force --project src/Cuzdan.Infrastructure --startup-pr
 ```
 
 The API will be available at `https://localhost:5001`.
+
+Note that admin password is "admin123"
 
 ## 📚 API Usage
 
