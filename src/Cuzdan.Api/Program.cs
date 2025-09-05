@@ -15,9 +15,13 @@ using Cuzdan.Domain.Enums;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using Cuzdan.Application.Validators;
-using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using Serilog;
 using Cuzdan.Application.Decorators;
+using Cuzdan.Api.Filters;
+using Microsoft.AspNetCore.Mvc;
+using FluentValidation.AspNetCore;
+using CorrelationId.DependencyInjection;
+using CorrelationId;
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -27,6 +31,8 @@ var configuration = new ConfigurationBuilder()
 
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithCorrelationId()
     .CreateBootstrapLogger();
 try
 {
@@ -60,6 +66,8 @@ try
     );
 
     builder.Host.UseSerilog();
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddDefaultCorrelationId();
 
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -96,14 +104,25 @@ try
 
 
     builder.Services.AddMemoryCache();
-    builder.Services.AddControllers()
-        .AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-        });
-    builder.Services.AddHttpClient();
-    builder.Services.AddValidatorsFromAssembly(typeof(RegisterUserDtoValidator).Assembly);
+    builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<AsyncValidationFilter>();
+    })
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+    builder.Services.Configure<ApiBehaviorOptions>(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    });
     builder.Services.AddFluentValidationAutoValidation();
+    builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserDtoValidator>();
+
+
+
+
+    builder.Services.AddHttpClient();
 
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
@@ -150,7 +169,9 @@ try
     var app = builder.Build();
 
     app.UseExceptionHandler();
+    app.UseCorrelationId();
     app.UseSerilogRequestLogging();
+
 
     if (app.Environment.IsDevelopment())
     {

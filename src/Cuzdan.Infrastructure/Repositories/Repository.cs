@@ -33,34 +33,20 @@ public class Repository<T> : IRepository<T> where T : class
         return await _dbSet.FindAsync([id], cancellationToken);
     }
 
-    /// <summary>
-    /// Bir kaydı, üzerinde güncelleme yapmak amacıyla veritabanında kilitler (exclusive lock).
-    /// Bu işlem bitene kadar başka hiçbir transaction bu kaydı okuyamaz veya yazamaz.
-    /// Kötümser Eşzamanlılık (Pessimistic Concurrency) için kullanılır.
-    /// ÖNEMLİ: Bu metot mutlaka bir 'BeginTransactionAsync' bloğu içinde çağrılmalıdır.
-    /// </summary>
     public async Task<T?> GetByIdForWriteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        // EF Core metadata'sından tablo ve primary key bilgilerini dinamik olarak alıyoruz.
         var entityType = _context.Model.FindEntityType(typeof(T))!;
         var tableName = entityType.GetTableName()!;
         var pkPropertyName = entityType.FindPrimaryKey()!.Properties.Single().Name;
         var pkColumnName = entityType.FindProperty(pkPropertyName)!.GetColumnName(StoreObjectIdentifier.Table(tableName, null))!;
 
-        // Veritabanına özel kilitleme sorgusu gönderiyoruz.
-        // Bu sorgu, parametre kullanıldığı için SQL Injection'a karşı güvenlidir.
-        // NOT: PostgreSQL için "FOR UPDATE", SQL Server için "WITH (UPDLOCK, ROWLOCK)".
+
         var sql = $"SELECT * FROM \"{tableName}\" WHERE \"{pkColumnName}\" = {{0}} FOR UPDATE";
 
         return await _dbSet.FromSqlRaw(sql, id).FirstOrDefaultAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Bir kaydı, başka bir transaction'ın onu değiştirmesini engelleyecek şekilde kilitler (shared lock).
-    /// Bu işlem bitene kadar başka transaction'lar bu kaydı okuyabilir ama değiştiremez.
-    /// Genellikle tutarlı okumalar yapmak için kullanılır.
-    /// ÖNEMLİ: Bu metot mutlaka bir 'BeginTransactionAsync' bloğu içinde çağrılmalıdır.
-    /// </summary>
+
     public async Task<T?> GetByIdForReadAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entityType = _context.Model.FindEntityType(typeof(T))!;
@@ -68,7 +54,6 @@ public class Repository<T> : IRepository<T> where T : class
         var pkPropertyName = entityType.FindPrimaryKey()!.Properties.Single().Name;
         var pkColumnName = entityType.FindProperty(pkPropertyName)!.GetColumnName(StoreObjectIdentifier.Table(tableName, null))!;
 
-        // NOT: PostgreSQL için "FOR SHARE", SQL Server için "WITH (HOLDLOCK, ROWLOCK)".
         var sql = $"SELECT * FROM \"{tableName}\" WHERE \"{pkColumnName}\" = {{0}} FOR SHARE";
 
         return await _dbSet.FromSqlRaw(sql, id).FirstOrDefaultAsync(cancellationToken);

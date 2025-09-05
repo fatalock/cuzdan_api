@@ -1,6 +1,7 @@
 using Cuzdan.Application.Exceptions;
 using Cuzdan.Application.Interfaces;
 using Cuzdan.Application.DTOs;
+using Cuzdan.Domain.Errors;
 
 namespace Cuzdan.Application.Services;
 
@@ -8,14 +9,14 @@ public class UserService(IUnitOfWork unitOfWork) : IUserService
 {
 
 
-    public async Task<UserDto> GetUserProfileAsync(Guid userId)
+    public async Task<Result<UserDto>> GetUserProfileAsync(Guid userId)
     {
         var user = await unitOfWork.Users.GetByIdAsync(userId);
 
-        if (user == null) throw new NotFoundException("User not found.");
+        if (user == null) return Result<UserDto>.Failure(DomainErrors.User.NotFound);
 
 
-        return new UserDto
+        var result = new UserDto
         {
             Id = user.Id,
             Name = user.Name,
@@ -23,17 +24,18 @@ public class UserService(IUnitOfWork unitOfWork) : IUserService
             Role = user.Role,
             CreatedAt = user.CreatedAt,
         };
+        return Result<UserDto>.Success(result);
     }
 
-    public async Task<UserDto> UpdateUserProfileAsync(Guid userId, UpdateUserDto updateUserDto)
+    public async Task<Result<UserDto>> UpdateUserProfileAsync(Guid userId, UpdateUserDto updateUserDto)
     {
 
         var user = await unitOfWork.Users.GetByIdAsync(userId);
-        if (user is null) throw new NotFoundException("User not found.");
+        if (user is null) return Result<UserDto>.Failure(DomainErrors.User.NotFound);
 
 
         var existingUserWithEmail = await unitOfWork.Users.GetUserByEmailAsync(updateUserDto.Email);
-        if (existingUserWithEmail != null && existingUserWithEmail.Id != userId) throw new ConflictException("Email is already in use by another account.");
+        if (existingUserWithEmail != null && existingUserWithEmail.Id != userId) return Result<UserDto>.Failure(DomainErrors.User.EmailAlreadyExists);
 
 
         user.Name = updateUserDto.Name;
@@ -46,7 +48,7 @@ public class UserService(IUnitOfWork unitOfWork) : IUserService
 
         await unitOfWork.SaveChangesAsync(CancellationToken.None);
 
-        return new UserDto
+        var result = new UserDto
         {
             Id = user.Id,
             Name = user.Name,
@@ -54,6 +56,8 @@ public class UserService(IUnitOfWork unitOfWork) : IUserService
             Role = user.Role,
             CreatedAt = user.CreatedAt,
         };
+        return Result<UserDto>.Success(result);
+
     }
     
 }

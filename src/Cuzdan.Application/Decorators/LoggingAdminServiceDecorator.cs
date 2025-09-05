@@ -10,64 +10,119 @@ public partial class LoggingAdminServiceDecorator(
     : LoggingDecoratorBase<IAdminService>(innerAdminService, logger), IAdminService
 {
 
-    public async Task<PagedResult<UserDto>> GetAllUsersProfileAsync(UserFilterDto filter)
+    public async Task<Result<PagedResult<UserDto>>> GetAllUsersProfileAsync(UserFilterDto filter)
     {
         var result = await LogAndExecuteAdminAsync(
             () => InnerService.GetAllUsersProfileAsync(filter));
 
-        LogGetAllUsersProfileAsyncSuccess(Logger, nameof(GetAllUsersProfileAsync));
+        if (result.IsSuccess)
+        {
+            LogGetAllUsersProfileAsyncSuccess(Logger, nameof(GetAllUsersProfileAsync));
+        }
+        else
+        {
+            LogGetAllUsersProfileAsyncFailure(Logger, nameof(GetAllUsersProfileAsync), result.Error!.Description);
+        }
         return result;
     }
 
-    public async Task<UserDto> GetUserProfileAsync(Guid userId)
+    public async Task<Result<UserDto>> GetUserProfileAsync(Guid userId)
     {
         var result = await LogAndExecuteAdminAsync(
             () => InnerService.GetUserProfileAsync(userId));
 
         LogGetUserProfileAsyncSuccess(Logger, nameof(GetUserProfileAsync), userId);
+        if (result.IsSuccess)
+        {
+            LogGetAllUsersProfileAsyncSuccess(Logger, nameof(GetAllUsersProfileAsync));
+        }
+        else
+        {
+            LogGetAllUsersProfileAsyncFailure(Logger, nameof(GetAllUsersProfileAsync), result.Error!.Description);
+        }
         return result;
     }
 
-    public async Task<PagedResult<WalletDto>> GetAllWalletsAsync(WalletFilterDto filter)
+    public async Task<Result<PagedResult<WalletDto>>> GetAllWalletsAsync(WalletFilterDto filter)
     {
         var result = await LogAndExecuteAdminAsync(
             () => InnerService.GetAllWalletsAsync(filter));
 
-        LogGetAllWalletsAsyncSuccess(Logger, nameof(GetAllWalletsAsync));
+        if (result.IsSuccess)
+        {
+            LogGetAllWalletsAsyncSuccess(Logger, nameof(GetAllWalletsAsync));
+        }
+        else
+        {
+            LogGetAllWalletsAsyncFailure(Logger, nameof(GetAllWalletsAsync), result.Error!.Description);
+        }
+        
         return result;
     }
 
-    public async Task<List<WalletDto>> GetUserWalletsAsync(Guid userId)
+    public async Task<Result<List<WalletDto>>> GetUserWalletsAsync(Guid userId)
     {
         var result = await LogAndExecuteAdminAsync(
             () => InnerService.GetUserWalletsAsync(userId));
 
-        LogGetUserWalletsAsyncSuccess(Logger, nameof(GetUserWalletsAsync), userId);
+        if (result.IsSuccess)
+        {
+            LogGetUserWalletsAsyncSuccess(Logger, nameof(GetUserWalletsAsync), userId);
+        }
+        else
+        {
+            LogGetUserWalletsAsyncFailure(Logger, nameof(GetUserWalletsAsync), result.Error!.Description);
+        }
+        
         return result;
     }
 
-    public async Task<PagedResult<TransactionDto>> GetAllTransactionsAsync(TransactionFilterDto filter)
+    public async Task<Result<PagedResult<TransactionDto>>> GetAllTransactionsAsync(TransactionFilterDto filter)
     {
         var result = await LogAndExecuteAdminAsync(
             () => InnerService.GetAllTransactionsAsync(filter));
 
-        LogGetAllTransactionsAsyncSuccess(Logger, nameof(GetAllTransactionsAsync));
+        if (result.IsSuccess)
+        {
+            LogGetAllTransactionsAsyncSuccess(Logger, nameof(GetAllTransactionsAsync));
+        }
+        else
+        {
+            LogGetAllTransactionsAsyncFailure(Logger, nameof(GetAllTransactionsAsync), result.Error!.Description);
+        }
+        
         return result;
     }
-    public async Task<PagedResult<TransactionDto>> GetTransactionsByWalletAsync(Guid walletId, TransactionFilterDto filter)
+    public async Task<Result<PagedResult<TransactionDto>>> GetTransactionsByWalletAsync(Guid walletId, TransactionFilterDto filter)
     {
         var result = await LogAndExecuteAdminAsync(
             () => InnerService.GetTransactionsByWalletAsync(walletId, filter));
 
-        LogGetTransactionsByWalletAsyncSuccess(Logger, nameof(GetTransactionsByWalletAsync), walletId);
+
+        if (result.IsSuccess)
+        {
+            LogGetTransactionsByWalletAsyncSuccess(Logger, nameof(GetTransactionsByWalletAsync), walletId);
+        }
+        else
+        {
+            LogGetTransactionsByWalletAsyncFailure(Logger, nameof(GetTransactionsByWalletAsync), result.Error!.Description);
+        }
         return result;
     }
-    public async Task<TransactionDto> GetTransactionAsync(Guid transactionId)
+    public async Task<Result<TransactionDto>> GetTransactionAsync(Guid transactionId)
     {
         var result = await LogAndExecuteAdminAsync(
             () => InnerService.GetTransactionAsync(transactionId));
 
-        LogGetTransactionAsyncSuccess(Logger, nameof(GetTransactionAsync), transactionId);
+        if (result.IsSuccess)
+        {
+            LogGetTransactionAsyncSuccess(Logger, nameof(GetTransactionAsync), transactionId);
+        }
+        else
+        {
+            LogGetTransactionAsyncFailure(Logger, nameof(GetTransactionAsync), result.Error!.Description);
+        }
+        
         return result;
     }
 
@@ -80,6 +135,13 @@ public partial class LoggingAdminServiceDecorator(
         public const int LogGetAllTransactionsAsyncSuccess = 2018;
         public const int LogGetTransactionsByWalletAsyncSuccess = 2019;
         public const int LogGetTransactionAsyncSuccess = 2020;
+        public const int LogGetAllUsersProfileAsyncFailure = 4014;
+        public const int LogGetUserProfileAsyncFailure = 4015;
+        public const int LogGetAllWalletsAsyncFailure = 4016;
+        public const int LogGetUserWalletsAsyncFailure = 4017;
+        public const int LogGetAllTransactionsAsyncFailure = 4018;
+        public const int LogGetTransactionsByWalletAsyncFailure = 4019;
+        public const int LogGetTransactionAsyncFailure = 4020;
     }
 
     [LoggerMessage(EventId = LoggingEvents.LogGetAllUsersProfileAsyncSuccess, Level = LogLevel.Information, Message = "Successfully fetched all user prifiles in {MethodName} with admin")]
@@ -96,10 +158,33 @@ public partial class LoggingAdminServiceDecorator(
 
     [LoggerMessage(EventId = LoggingEvents.LogGetAllTransactionsAsyncSuccess, Level = LogLevel.Information, Message = "Successfully fetched all transactions in {MethodName} with admin")]
     private static partial void LogGetAllTransactionsAsyncSuccess(ILogger Logger, string methodName);
-    
+
     [LoggerMessage(EventId = LoggingEvents.LogGetTransactionsByWalletAsyncSuccess, Level = LogLevel.Information, Message = "Successfully fetched all transactions for Wallet {WalletId} in {MethodName} with admin")]
     private static partial void LogGetTransactionsByWalletAsyncSuccess(ILogger Logger, string methodName, Guid walletId);
 
     [LoggerMessage(EventId = LoggingEvents.LogGetTransactionAsyncSuccess, Level = LogLevel.Information, Message = "Successfully fetched Transaction {TransactionId} in {MethodName} with admin")]
     private static partial void LogGetTransactionAsyncSuccess(ILogger Logger, string methodName, Guid transactionId);
+    
+
+    [LoggerMessage(EventId = LoggingEvents.LogGetAllUsersProfileAsyncFailure, Level = LogLevel.Warning, Message = "Failed {MethodName} with admin . Reason: {ErrorDescription}")]
+    private static partial void LogGetAllUsersProfileAsyncFailure(ILogger Logger, string methodName, string errorDescription);
+
+    [LoggerMessage(EventId = LoggingEvents.LogGetUserProfileAsyncFailure, Level = LogLevel.Warning, Message = "Failed {MethodName} with admin . Reason: {ErrorDescription}")]
+    private static partial void LogGetUserProfileAsyncFailure(ILogger Logger, string methodName, string errorDescription);
+
+    [LoggerMessage(EventId = LoggingEvents.LogGetAllWalletsAsyncFailure, Level = LogLevel.Warning, Message = "Failed {MethodName} with admin . Reason: {ErrorDescription}")]
+    private static partial void LogGetAllWalletsAsyncFailure(ILogger Logger, string methodName, string errorDescription);
+
+    [LoggerMessage(EventId = LoggingEvents.LogGetUserWalletsAsyncFailure, Level = LogLevel.Warning, Message = "Failed {MethodName} with admin . Reason: {ErrorDescription}")]
+    private static partial void LogGetUserWalletsAsyncFailure(ILogger Logger, string methodName, string errorDescription);
+
+    [LoggerMessage(EventId = LoggingEvents.LogGetAllTransactionsAsyncFailure, Level = LogLevel.Warning, Message = "Failed {MethodName} with admin . Reason: {ErrorDescription}")]
+    private static partial void LogGetAllTransactionsAsyncFailure(ILogger Logger, string methodName, string errorDescription);
+
+    [LoggerMessage(EventId = LoggingEvents.LogGetTransactionsByWalletAsyncFailure, Level = LogLevel.Warning, Message = "Failed {MethodName} with admin . Reason: {ErrorDescription}")]
+    private static partial void LogGetTransactionsByWalletAsyncFailure(ILogger Logger, string methodName, string errorDescription);
+
+    [LoggerMessage(EventId = LoggingEvents.LogGetTransactionAsyncFailure, Level = LogLevel.Warning, Message = "Failed {MethodName} with admin . Reason: {ErrorDescription}")]
+    private static partial void LogGetTransactionAsyncFailure(ILogger Logger, string methodName, string errorDescription);
+
 }

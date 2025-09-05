@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Cuzdan.Application.Exceptions;
+using FluentValidation;
 
 namespace Cuzdan.Api.Handlers;
 
@@ -25,6 +26,7 @@ public partial class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logg
             InvalidTokenException _ => HttpStatusCode.Unauthorized,
             TokenExpiredException _ => HttpStatusCode.Unauthorized,
             RevokedTokenException _ => HttpStatusCode.Unauthorized,
+            ValidationException _ => HttpStatusCode.BadRequest,
 
             _ => HttpStatusCode.InternalServerError                         // 500
         };

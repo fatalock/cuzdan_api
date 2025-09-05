@@ -9,20 +9,16 @@ namespace Cuzdan.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class TransactionsController(ITransactionService TransactionService) : ControllerBase
+public class TransactionsController(ITransactionService TransactionService) : BaseController
 {
 
     [HttpPost("transfer")]
     public async Task<IActionResult> Transfer([FromBody] CreateTransactionDto transactionDto)
     {
         Guid userId = User.GetUserId();
-        await TransactionService.TransferTransactionAsync(transactionDto, userId);
+        var result = await TransactionService.TransferTransactionAsync(transactionDto, userId);
 
-        return Ok(new ApiResponse
-        {
-            IsSuccessful = true,
-            SuccessMessage = "Funds transfered succesfully"
-        });
+        return HandleResult(result);
     }
     [HttpPost("wallet_history/{walletId}")]
     public async Task<IActionResult> GetTransactionsByWalletAsync(Guid walletId, [FromBody] TransactionFilterDto filter)
@@ -31,37 +27,24 @@ public class TransactionsController(ITransactionService TransactionService) : Co
 
         var result = await TransactionService.GetTransactionsByWalletAsync(userId, walletId, filter);
 
-        return Ok(new ApiResponse<PagedResult<TransactionDto>>
-        {
-            IsSuccessful = true,
-            Data = result,
-            SuccessMessage = "Transactions fetched succesfully"
-        });
+        return HandleResult(result);
     }
     [HttpPost("deposit/{walletId}")]
     public async Task<IActionResult> RequestDepositAsync(Guid walletId, [FromBody] DepositWithdrawalRequestDto depositRequestDto)
     {
         Guid userId = User.GetUserId();
 
-        await TransactionService.RequestDepositAsync(userId, walletId, depositRequestDto);
+        var result = await TransactionService.RequestDepositAsync(userId, walletId, depositRequestDto);
 
-        return Ok(new ApiResponse
-        {
-            IsSuccessful = true,
-            SuccessMessage = "Deposit requested succesfully"
-        });
+        return HandleResult(result);
     }
     [HttpPost("withdrawal/{walletId}")]
     public async Task<IActionResult> RequestWithdrawalAsync(Guid walletId, [FromBody] DepositWithdrawalRequestDto withdrawalRequestDto)
     {
         Guid userId = User.GetUserId();
 
-        await TransactionService.RequestWithdrawalAsync(userId, walletId, withdrawalRequestDto);
+        var result = await TransactionService.RequestWithdrawalAsync(userId, walletId, withdrawalRequestDto);
 
-        return Ok(new ApiResponse
-        {
-            IsSuccessful = true,
-            SuccessMessage = "Withdrawal requested succesfully"
-        });
+        return HandleResult(result);
     }
 }

@@ -4,18 +4,18 @@ namespace Cuzdan.Application.Interfaces;
 
 public interface IAdminService
 {
-    Task<PagedResult<UserDto>> GetAllUsersProfileAsync(UserFilterDto filter);
-    Task<UserDto> GetUserProfileAsync(Guid userId);
+    Task<Result<PagedResult<UserDto>>> GetAllUsersProfileAsync(UserFilterDto filter);
+    Task<Result<UserDto>> GetUserProfileAsync(Guid userId);
 
-    Task<PagedResult<WalletDto>> GetAllWalletsAsync(WalletFilterDto filter);
+    Task<Result<PagedResult<WalletDto>>> GetAllWalletsAsync(WalletFilterDto filter);
 
-    Task<List<WalletDto>> GetUserWalletsAsync(Guid userId);
+    Task<Result<List<WalletDto>>> GetUserWalletsAsync(Guid userId);
 
 
-    Task<PagedResult<TransactionDto>> GetAllTransactionsAsync(TransactionFilterDto filter);
+    Task<Result<PagedResult<TransactionDto>>> GetAllTransactionsAsync(TransactionFilterDto filter);
 
-    Task<PagedResult<TransactionDto>> GetTransactionsByWalletAsync(Guid walletId, TransactionFilterDto filter);
-    Task<TransactionDto> GetTransactionAsync(Guid transactionId);
+    Task<Result<PagedResult<TransactionDto>>> GetTransactionsByWalletAsync(Guid walletId, TransactionFilterDto filter);
+    Task<Result<TransactionDto>> GetTransactionAsync(Guid transactionId);
 
 
 

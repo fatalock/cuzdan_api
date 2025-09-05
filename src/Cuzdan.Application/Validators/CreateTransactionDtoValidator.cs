@@ -12,7 +12,7 @@ namespace Cuzdan.Application.Validators
 
             RuleFor(x => x.ToId)
                 .NotEmpty().WithMessage("Destination wallet ID (ToId) is required.")
-                .NotEqual(x => x.FromId).WithMessage("Cannot transfer to the same wallet."); // Bonus: A useful business rule
+                .NotEqual(x => x.FromId).WithMessage("Cannot transfer to the same wallet.");
 
             RuleFor(x => x.Amount)
                 .GreaterThan(0).WithMessage("Amount must be greater than 0.");

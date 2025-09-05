@@ -37,7 +37,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         }
         catch (Exception ex)
         {
-            LogMethodException(Logger, ex, methodName, userId);
+
             throw;
         }
         finally
@@ -57,7 +57,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         }
         catch (Exception ex)
         {
-            LogMethodExceptionWithoutUser(Logger, ex, methodName);
+
             throw;
         }
         finally
@@ -77,7 +77,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         }
         catch (Exception ex)
         {
-            LogMethodExceptionWithoutUser(Logger, ex, methodName);
+
             throw;
         }
         finally
@@ -97,7 +97,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         }
         catch (Exception ex)
         {
-            LogMethodExceptionAdminUser(Logger, ex, methodName);
+
             throw;
         }
         finally
@@ -117,7 +117,7 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         }
         catch (Exception ex)
         {
-            LogMethodExceptionAdminUser(Logger, ex, methodName);
+
             throw;
         }
         finally
@@ -127,24 +127,17 @@ public abstract partial class LoggingDecoratorBase<TService>(TService innerServi
         }
     }
 
-    [LoggerMessage(EventId = 4001, Level = LogLevel.Information, Message = "Entering {MethodName} for User {UserId}")]
+    [LoggerMessage(EventId = 3001, Level = LogLevel.Information, Message = "Entering {MethodName} for User {UserId}")]
     private static partial void LogMethodEntry(ILogger Logger, string methodName, Guid userId);
 
-    [LoggerMessage(EventId = 4002, Level = LogLevel.Information, Message = "Finished {MethodName} in {ElapsedMilliseconds}ms")]
+    [LoggerMessage(EventId = 3002, Level = LogLevel.Information, Message = "Finished {MethodName} in {ElapsedMilliseconds}ms")]
     private static partial void LogMethodExit(ILogger Logger, string methodName, long elapsedMilliseconds);
 
-    [LoggerMessage(EventId = 4003, Level = LogLevel.Information, Message = "Entering {MethodName}")]
+    [LoggerMessage(EventId = 3003, Level = LogLevel.Information, Message = "Entering {MethodName}")]
     private static partial void LogMethodEntryWithoutUser(ILogger logger, string methodName);
 
-    [LoggerMessage(EventId = 4004, Level = LogLevel.Information, Message = "Entering {MethodName} with admin")]
+    [LoggerMessage(EventId = 3004, Level = LogLevel.Information, Message = "Entering {MethodName} with admin")]
     private static partial void LogMethodEntryAdminUser(ILogger logger, string methodName);
 
-    [LoggerMessage(EventId = 5001, Level = LogLevel.Error, Message = "Exception occurred in {MethodName} for User {UserId}")]
-    private static partial void LogMethodException(ILogger Logger, Exception ex, string methodName, Guid userId);
 
-    [LoggerMessage(EventId = 5003, Level = LogLevel.Error, Message = "Exception occurred in {MethodName}")]
-    private static partial void LogMethodExceptionWithoutUser(ILogger logger, Exception ex, string methodName);
-    
-    [LoggerMessage(EventId = 5004, Level = LogLevel.Error, Message = "Exception occurred in {MethodName} with admin")]
-    private static partial void LogMethodExceptionAdminUser(ILogger logger, Exception ex, string methodName);
 }

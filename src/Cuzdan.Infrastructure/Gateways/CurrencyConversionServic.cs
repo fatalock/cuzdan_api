@@ -39,7 +39,6 @@ public class CurrencyConversionService(IMemoryCache memoryCache, HttpClient http
     }
     private async Task SendApiCallAndPopulateAsync()
     {
-        // API'den sadece desteklediğimiz kurları, USD bazlı olarak istiyoruz.
         var symbols = string.Join(",", _supportedCurrencies.Where(c => c != BaseCurrency));
 
         var requestUrl = $"api/latest.json?app_id={_appId}&base={BaseCurrency}&symbols={symbols}";

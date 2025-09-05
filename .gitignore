@@ -23,6 +23,7 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+
 # .NET Core
 project.lock.json
 project.fragment.lock.json
@@ -62,5 +63,7 @@ nunit-*.xml
 .idea/
 .history/
 src/Cuzdan.Api/appsettings.json
-test.py
+print_tree.py
 roadmap.md
+src/Cuzdan.Api/logs/
+src/Cuzdan.Api/appsettings.Development.json

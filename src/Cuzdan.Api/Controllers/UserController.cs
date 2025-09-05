@@ -10,7 +10,7 @@ namespace Cuzdan.Api.Controllers;
 [Route("api/[controller]")]
 [Authorize]
 
-public class UserController(IUserService userService) : ControllerBase
+public class UserController(IUserService userService) : BaseController
 {
 
 
@@ -21,12 +21,7 @@ public class UserController(IUserService userService) : ControllerBase
 
         var result = await userService.GetUserProfileAsync(userId);
 
-        return Ok(new ApiResponse<UserDto>
-        {
-            IsSuccessful = true,
-            Data = result,
-            SuccessMessage = "Profile fetched successfully."
-        });
+        return HandleResult(result);
     }
 
     [HttpPut("update")]
@@ -36,12 +31,7 @@ public class UserController(IUserService userService) : ControllerBase
 
         var result = await userService.UpdateUserProfileAsync(userId, updateUserDto);
 
-        return Ok(new ApiResponse<UserDto>
-        {
-            IsSuccessful = true,
-            Data = result,
-            SuccessMessage = "Profile updated successfully."
-        });
+        return HandleResult(result);
     }
 
 }

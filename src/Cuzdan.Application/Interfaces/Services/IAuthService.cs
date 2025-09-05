@@ -7,9 +7,9 @@ public interface IAuthService
 
 
 
-    Task<UserDto> RegisterAsync(RegisterUserDto registerDto);
-    Task<AuthResult> LoginAsync(LoginUserDto loginDto);
-    Task<AuthResult> RefresAccesshAsync(string refreshToken);
+    Task<Result<UserDto>> RegisterAsync(RegisterUserDto registerDto);
+    Task<Result<AuthResult>> LoginAsync(LoginUserDto loginDto);
+    Task<Result<AuthResult>> RefresAccesshAsync(string refreshToken);
     
 
 }

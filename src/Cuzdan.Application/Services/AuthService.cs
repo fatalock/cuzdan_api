@@ -4,6 +4,7 @@ using Cuzdan.Application.Exceptions;
 using Cuzdan.Application.Interfaces;
 using Cuzdan.Domain.Entities;
 using Cuzdan.Domain.Enums;
+using Cuzdan.Domain.Errors;
 
 namespace Cuzdan.Application.Services;
 
@@ -11,10 +12,9 @@ namespace Cuzdan.Application.Services;
 public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitOfWork) : IAuthService
 {
 
-    public async Task<UserDto> RegisterAsync(RegisterUserDto registerDto)
+    public async Task<Result<UserDto>> RegisterAsync(RegisterUserDto registerDto)
     {
-        if (await unitOfWork.Users.GetUserByEmailAsync(registerDto.Email) != null) throw new ConflictException("Email already exist");
-
+        if (await unitOfWork.Users.GetUserByEmailAsync(registerDto.Email) != null) return Result<UserDto>.Failure(DomainErrors.User.EmailAlreadyExists);
         string passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
         var newUser = new User
@@ -28,7 +28,7 @@ public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitO
 
         await unitOfWork.Users.AddAsync(newUser);
         await unitOfWork.SaveChangesAsync();
-        return new UserDto
+        var result = new UserDto
         {
             Id = newUser.Id,
             Name = newUser.Name,
@@ -36,13 +36,15 @@ public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitO
             CreatedAt = newUser.CreatedAt,
             Role = newUser.Role,
         };
+        return Result<UserDto>.Success(result);
+
     }
-    public async Task<AuthResult> LoginAsync(LoginUserDto loginDto)
+    public async Task<Result<AuthResult>> LoginAsync(LoginUserDto loginDto)
     {
 
         var user = await unitOfWork.Users.GetUserByEmailAsync(loginDto.Email);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash)) throw new UnauthorizedAccessException("Invalid email or password.");
+        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash)) return Result<AuthResult>.Failure(DomainErrors.Auth.InvalidCredentials);
 
 
         var accessToken = jwtTokenGenerator.GenerateAccessToken(user);
@@ -52,25 +54,37 @@ public class AuthService(IJwtTokenGenerator jwtTokenGenerator, IUnitOfWork unitO
         await unitOfWork.RefreshTokens.AddAsync(refreshToken);
         await unitOfWork.SaveChangesAsync();
 
-        return new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken.Token, UserId = user.Id} ;
+        var result = new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken.Token, UserId = user.Id };
+        return Result<AuthResult>.Success(result);
     }
 
-    public async Task<AuthResult> RefresAccesshAsync(string refreshToken)
+    public async Task<Result<AuthResult>> RefresAccesshAsync(string refreshToken)
     {
         var storedToken = await unitOfWork.RefreshTokens.GetRefreshTokenByTokenAsync(refreshToken);
 
-        if (storedToken == null) throw new InvalidTokenException("Invalid refresh token.");
-
-        if (storedToken.ExpiresAt < DateTime.UtcNow) throw new TokenExpiredException("Refresh token Expired.");
-
-        if (storedToken.IsRevoked) throw new RevokedTokenException("Refresh token revoked");
-
+        if (storedToken == null)
+        {
+            return Result<AuthResult>.Failure(DomainErrors.Auth.InvalidToken);
+        }
+        if (storedToken.ExpiresAt < DateTime.UtcNow)
+        {
+            return Result<AuthResult>.Failure(DomainErrors.Auth.TokenExpired);
+        }
+        if (storedToken.IsRevoked)
+        {
+            return Result<AuthResult>.Failure(DomainErrors.Auth.TokenRevoked);
+        }
+        
         var user = await unitOfWork.Users.GetByIdAsync(storedToken.UserId);
+        if (user == null)
+        {
+            return Result<AuthResult>.Failure(DomainErrors.User.NotFound);
+        }
 
-        if (user == null) throw new NotFoundException("User not exist.");
-  
         var accessToken = jwtTokenGenerator.GenerateAccessToken(user);
-        return new AuthResult{AccessToken = accessToken, RefreshToken = refreshToken, UserId = user.Id};
+        var result = new AuthResult { AccessToken = accessToken, RefreshToken = refreshToken, UserId = user.Id };
+        return Result<AuthResult>.Success(result);
+
     }
     
     private static RefreshToken GenerateRefreshToken(Guid userId)

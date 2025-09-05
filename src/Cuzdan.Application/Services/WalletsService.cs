@@ -9,14 +9,14 @@ public class WalletService(IUnitOfWork unitOfWork) : IWalletService
 {
 
 
-    public async Task<WalletDto> CreateWalletAsync(CreateWalletDto createWalletDto, Guid Id)
+    public async Task<Result<WalletDto>> CreateWalletAsync(CreateWalletDto createWalletDto, Guid userId)
     {
 
 
         var newWallet = new Wallet
         {
             WalletName = createWalletDto.WalletName,
-            UserId = Id,
+            UserId = userId,
             Currency = createWalletDto.Currency
         };
 
@@ -32,12 +32,12 @@ public class WalletService(IUnitOfWork unitOfWork) : IWalletService
             CreatedAt = newWallet.CreatedAt
         };
 
-        return walletDtoToReturn;
+        return Result<WalletDto>.Success(walletDtoToReturn);
     }
 
-    public async Task<List<WalletDto>> GetWalletsAsync(Guid Id)
+    public async Task<Result<List<WalletDto>>> GetWalletsAsync(Guid userId)
     {
-        var wallets = await unitOfWork.Wallets.GetWalletsAsync(Id);
+        var wallets = await unitOfWork.Wallets.GetWalletsAsync(userId);
         var walletDtos = wallets.Select(wallet => new WalletDto
         {
             Id = wallet.Id,
@@ -48,20 +48,20 @@ public class WalletService(IUnitOfWork unitOfWork) : IWalletService
 
         }).ToList();
 
-        return walletDtos;
+        return Result<List<WalletDto>>.Success(walletDtos);
     }
 
-    public async Task<List<UserBalanceByCurrencyResponseDto>> GetTotalBalancePerCurrencyAsync(Guid Id)
+    public async Task<Result<List<UserBalanceByCurrencyResponseDto>>> GetTotalBalancePerCurrencyAsync(Guid userId)
     {
-        var balancesFromRepo = await unitOfWork.Wallets.GetTotalBalancePerCurrencyAsync(Id);
+        var balancesFromRepo = await unitOfWork.Wallets.GetTotalBalancePerCurrencyAsync(userId);
         
-        var response = balancesFromRepo.Select(b => new UserBalanceByCurrencyResponseDto
+        var result = balancesFromRepo.Select(b => new UserBalanceByCurrencyResponseDto
         {
-            Currency = b.CurrencyType.ToString(),
+            Currency = b.CurrencyType,
             TotalBalance = b.TotalBalance
         }).ToList();
 
-        return response;
+        return Result<List<UserBalanceByCurrencyResponseDto>>.Success(result);
     }
 
 }
