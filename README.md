@@ -152,6 +152,6 @@ Unit and integration tests are available in the `Cuzdan.Tests` project.
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
